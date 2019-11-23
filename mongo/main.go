@@ -2,8 +2,10 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
+	"reflect"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -15,6 +17,17 @@ type Trainer struct {
 	Name string
 	Age  int
 	City string
+}
+
+func insertOne(str []byte, collection *mongo.Collection) {
+	var trainer Trainer
+	err := json.Unmarshal(str, &trainer)
+
+	insertResult, err := collection.InsertOne(context.TODO(), trainer)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println("Inserted a single document: ", insertResult.InsertedID)
 }
 
 func main() {
@@ -44,6 +57,13 @@ func main() {
 	ash := Trainer{"Ash", 10, "Pallet Town"}
 	misty := Trainer{"Misty", 10, "Cerulean City"}
 	brock := Trainer{"Brock", 15, "Pewter City"}
+
+	//Test
+	fmt.Println(reflect.TypeOf(collection))
+	fmt.Println("TEST")
+	gregre:= Trainer{"Gregre", 21, "Rennes"}
+	b, err := json.Marshal(gregre)
+	insertOne(b, collection)
 
 	//insert one
 	insertResult, err := collection.InsertOne(context.TODO(), ash)
