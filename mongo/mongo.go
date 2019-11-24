@@ -45,26 +45,24 @@ func findOne(key, value string, collection *mongo.Collection) Trainer{
 
 	err := collection.FindOne(context.TODO(), filter).Decode(&result)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
+	} else {
+		fmt.Printf("Found a single document: %+v\n", result)
 	}
-
-	fmt.Printf("Found a single document: %+v\n", result)
 	return result
 }
 
-func findMany(key, value string, collection *mongo.Collection){
-
-	//TODO : understand how this work
+func findMany(key, value string, collection *mongo.Collection) []Trainer {
 
 	// Pass these options to the Find method
 	findOptions := options.Find()
-	findOptions.SetLimit(2)
+	//findOptions.SetLimit(2)
 
 	// Here's an array in which you can store the decoded documents
-	var results []*Trainer
+	var results []Trainer
 
 	// Passing bson.D{{}} as the filter matches all documents in the collection
-	cur, err := collection.Find(context.TODO(), bson.D{{}}, findOptions)
+	cur, err := collection.Find(context.TODO(), bson.D{{key, value}}, findOptions)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -77,20 +75,21 @@ func findMany(key, value string, collection *mongo.Collection){
 		var elem Trainer
 		err := cur.Decode(&elem)
 		if err != nil {
-			log.Fatal(err)
+			log.Println(err)
 		}
 
-		results = append(results, &elem)
+		results = append(results, elem)
 	}
 
 	if err := cur.Err(); err != nil {
-		log.Fatal(err)
+		log.Println(err)
+	} else {
+		fmt.Printf("Found multiple documents : %+v\n", results)
 	}
-
 	// Close the cursor once finished
 	cur.Close(context.TODO())
 
-	fmt.Printf("Found multiple documents (array of pointers): %+v\n", results)
+	return results
 }
 
 func deleteAll(collection *mongo.Collection) {
@@ -106,10 +105,10 @@ func deleteOne(key, value string, collection *mongo.Collection) {
 
 	del, err := collection.DeleteOne(context.TODO(), filter)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
+	} else {
+		fmt.Printf("Deleted %+v document\n", del.DeletedCount)
 	}
-
-	fmt.Printf("Found a single document: %+v\n", del) //TODO
 }
 
 func disconnect(client *mongo.Client) {
@@ -167,9 +166,15 @@ func main() {
 	bs, err := json.Marshal(trainers)
 	insertMany(bs, collection)
 
-	findOne("name", "Ash", collection)
+	findOne("name", "Ash", collection)		// why does name need to be in lowercase for Ash ???
 
+	findOne("Name","Misty", collection)
 
+	findMany("City", "Pewter City", collection)
+
+	deleteOne("Name", "Gregre", collection)
+
+	findMany("City", "Pewter City", collection)
 
 	//prepares the update of one document (using bson)
 	filter := bson.D{{"name", "Ash"}}
@@ -187,44 +192,7 @@ func main() {
 	}
 	fmt.Printf("Matched %v documents and updated %v documents.\n", updateResult.MatchedCount, updateResult.ModifiedCount)
 
-
-	//Find multiple documents
-	// Pass these options to the Find method
-	findOptions := options.Find()
-	findOptions.SetLimit(2)
-
-	// Here's an array in which you can store the decoded documents
-	var results []*Trainer
-
-	// Passing bson.D{{}} as the filter matches all documents in the collection
-	cur, err := collection.Find(context.TODO(), bson.D{{}}, findOptions)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// Finding multiple documents returns a cursor
-	// Iterating through the cursor allows us to decode documents one at a time
-	for cur.Next(context.TODO()) {
-
-		// create a value into which the single document can be decoded
-		var elem Trainer
-		err := cur.Decode(&elem)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		results = append(results, &elem)
-	}
-
-	if err := cur.Err(); err != nil {
-		log.Fatal(err)
-	}
-
-	// Close the cursor once finished
-	cur.Close(context.TODO())
-
-	fmt.Printf("Found multiple documents (array of pointers): %+v\n", results)
-
+	deleteAll(collection)
 
 	disconnect(client)
 }
