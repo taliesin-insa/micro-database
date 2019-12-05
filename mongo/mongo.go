@@ -1,4 +1,4 @@
-package main
+package mongo
 
 import (
 	"context"
@@ -8,6 +8,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"log"
+	"strconv"
 )
 
 // You will be using this Trainer type later in the program
@@ -44,13 +45,9 @@ type Annotation struct {
 func InsertOne(b []byte, collection *mongo.Collection) {
 	var pic Picture
 	err := json.Unmarshal(b, &pic)
-	if err != nil {
-		log.Fatal(err)
-	}
+	checkError(err)
 	insertResult, err := collection.InsertOne(context.TODO(), pic)
-	if err != nil {
-		log.Fatal(err)
-	}
+	checkError(err)
 
 	fmt.Println("Inserted a single document: ", insertResult.InsertedID)
 }
@@ -63,15 +60,19 @@ func InsertMany(b []byte, collection *mongo.Collection) {
 	var pics []interface{}
 	err := json.Unmarshal(b, &pics)
 	insertManyResult, err := collection.InsertMany(context.TODO(), pics)
-	if err != nil {
-		log.Fatal(err)
-	}
+	checkError(err)
 
 	fmt.Println("Inserted multiple documents: ", insertManyResult.InsertedIDs)
 }
 
-func FindOne(key string, value int, collection *mongo.Collection) Picture{
-	filter := bson.D{{key, value}}
+func SelectOne(key, value string, collection *mongo.Collection) Picture{
+	filter := bson.D{{}}
+	if key == "Id" {
+		id, _ := strconv.Atoi(value)
+		filter = bson.D{{key, id}}
+	} else {
+		filter = bson.D{{key, value}}
+	}
 	var result Picture
 
 	err := collection.FindOne(context.TODO(), filter).Decode(&result)
@@ -94,9 +95,7 @@ func FindMany(key string, value int, collection *mongo.Collection) []Picture {
 
 	// Passing bson.D{{}} as the filter matches all documents in the collection
 	cur, err := collection.Find(context.TODO(), bson.D{{key, value}}, findOptions)
-	if err != nil {
-		log.Fatal(err)
-	}
+	checkError(err)
 
 	// Finding multiple documents returns a cursor
 	// Iterating through the cursor allows us to decode documents one at a time
@@ -130,9 +129,7 @@ func UpdateFlags(b []byte, collection *mongo.Collection) {
 	var modifications []Modification
 	var filter, update bson.D
 	err := json.Unmarshal(b,&modifications)
-	if err != nil {
-		log.Fatal(err)
-	}
+	checkError(err)
 
 
 	for _, modif := range modifications {
@@ -143,9 +140,7 @@ func UpdateFlags(b []byte, collection *mongo.Collection) {
 			}},
 		}
 		updateResult, err := collection.UpdateOne(context.TODO(), filter, update)
-		if err != nil {
-			log.Fatal(err)
-		}
+		checkError(err)
 		fmt.Printf("Matched %v documents and updated %v documents.\n", updateResult.MatchedCount, updateResult.ModifiedCount)
 	}
 }
@@ -158,9 +153,7 @@ func UpdateValue(b []byte, collection *mongo.Collection) {
 	var annotations []Annotation
 	var filter, update bson.D
 	err := json.Unmarshal(b,&annotations)
-	if err != nil {
-		log.Fatal(err)
-	}
+	checkError(err)
 
 	for _, annot := range annotations {
 		filter = bson.D{{"Id",annot.Id}}
@@ -171,18 +164,14 @@ func UpdateValue(b []byte, collection *mongo.Collection) {
 			}},
 		}
 		updateResult, err := collection.UpdateOne(context.TODO(), filter, update)
-		if err != nil {
-			log.Fatal(err)
-		}
+		checkError(err)
 		fmt.Printf("Matched %v documents and updated %v documents.\n", updateResult.MatchedCount, updateResult.ModifiedCount)
 	}
 }
 
 func DeleteAll(collection *mongo.Collection) {
 	deleteResult, err := collection.DeleteMany(context.TODO(), bson.D{{}})
-	if err != nil {
-		log.Fatal(err)
-	}
+	checkError(err)
 	fmt.Printf("Deleted %v documents in the trainers collection\n", deleteResult.DeletedCount)
 }
 
@@ -200,10 +189,7 @@ func DeleteOne(key string, value int, collection *mongo.Collection) {
 func Disconnect(client *mongo.Client) {
 	//Disconnection
 	err := client.Disconnect(context.TODO())
-
-	if err != nil {
-		log.Fatal(err)
-	}
+	checkError(err)
 	fmt.Println("Connection to MongoDB closed.")
 }
 
@@ -213,21 +199,22 @@ func Connect() *mongo.Client{
 
 	// Connect to MongoDB
 	client, err := mongo.Connect(context.TODO(), clientOptions)
-
-	if err != nil {
-		log.Fatal(err)
-	}
+	checkError(err)
 
 	// Check the connection
 	err = client.Ping(context.TODO(), nil)
 
-	if err != nil {
-		log.Fatal(err)
-	}
+	checkError(err)
 
 	fmt.Println("Connected to MongoDB!")
 
 	return client
+}
+
+func checkError(err error) {
+	if err != nil {
+		panic(err)
+	}
 }
 
 func main() {
@@ -255,9 +242,9 @@ func main() {
 
 	InsertMany([]byte(doc4), collection)
 
-	FindOne("id", 0, collection) // WHY does name need to be in lowercase for the first one ???
+	//SelectOne("id", "0", collection) // WHY does name need to be in lowercase for the first one ???
 
-	FindOne("Id",1, collection)
+	SelectOne("Id","1", collection)
 
 	FindMany("Id",4, collection)
 
@@ -272,14 +259,14 @@ func main() {
 
 	UpdateFlags(modif, collection)
 
-	FindOne("Id", 2, collection)
+	SelectOne("Id", "2", collection)
 
 	modification = `[{"Id": 1,"Value": "This text is annotated"}]`
 	modif = []byte(modification)
 
 	UpdateValue(modif, collection)
 
-	FindOne("Id", 1, collection)
+	SelectOne("Id", "1", collection)
 
 	DeleteAll(collection)
 

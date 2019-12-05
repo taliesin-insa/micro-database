@@ -1,0 +1,53 @@
+{
+ "meta": {
+  "type": "page",
+  "piff_version": "version 0",
+  "url": "TH-OC-54_0106_crop.jpg",
+  "date": "22/6/2017",
+  "id": "TH-OC-54_0106"
+ },
+ "location": [
+  {
+   "type": "title",
+   "polygon": [
+    [
+     "458.0503833516",
+     "301.6429252953"
+    ],
+    [
+     1573.0120481928,
+     "301.6429252953"
+    ],
+    [
+     1573.0120481928,
+     507.2069929039
+    ],
+    [
+     "458.0503833516",
+     507.2069929039
+    ]
+   ],
+   "id": "title_15"
+  }
+ ],
+ "data": [
+  {
+   "type": "annotation",
+   "location_id": "title_15",
+   "value": "Arlequin toujours Arlequin, Le Poirier, Le Tableau parlant",
+   "id": "a_0"
+  },
+  {
+   "type": "annotation",
+   "location_id": "title_15",
+   "value": "arlequin toujours 3èmeDu Du Poirier, et le Tableau Parlant",
+   "id": "a_1"
+  },
+  {
+   "type": "annotation",
+   "location_id": "title_15",
+   "value": "Arlequin toujours Arlequin, 3e du du Poirier, et Le Tableau parlant",
+   "id": "a_2"
+  }
+ ]
+}

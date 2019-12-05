@@ -2,6 +2,7 @@ package main
 
 import (
 	mongogo "MongoGo/mongo"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -51,6 +52,13 @@ func updateValue(w http.ResponseWriter, r *http.Request) {
 	mongogo.UpdateValue(reqBody, Collection)
 
 	w.WriteHeader(http.StatusCreated)
+}
+
+func selectById(w http.ResponseWriter, r *http.Request) {
+	entryId := mux.Vars(r)["id"]
+
+	entry := mongogo.SelectOne("Id", entryId, Collection)
+	json.NewEncoder(w).Encode(entry)
 }
 
 
@@ -105,6 +113,7 @@ func main() {
 	router := mux.NewRouter().StrictSlash(true)
 	router.HandleFunc("/", homeLink)
 	router.HandleFunc("/insert", createEntry).Methods("POST")
+	router.HandleFunc("/select/{id}", selectById).Methods("GET")
 
 	router.HandleFunc("/update/flags", updateFlags).Methods("PUT")
 	router.HandleFunc("/update/value/user", updateValue).Methods("PUT")
