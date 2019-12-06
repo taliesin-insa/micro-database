@@ -40,7 +40,7 @@ func updateFlags(w http.ResponseWriter, r *http.Request) {
 
 	mongogo.UpdateFlags(reqBody,Collection)
 
-	w.WriteHeader(http.StatusCreated)
+	w.WriteHeader(http.StatusAccepted)
 }
 
 func updateValue(w http.ResponseWriter, r *http.Request) {
@@ -51,7 +51,7 @@ func updateValue(w http.ResponseWriter, r *http.Request) {
 
 	mongogo.UpdateValue(reqBody, Collection)
 
-	w.WriteHeader(http.StatusCreated)
+	w.WriteHeader(http.StatusAccepted)
 }
 
 func selectById(w http.ResponseWriter, r *http.Request) {
@@ -59,6 +59,13 @@ func selectById(w http.ResponseWriter, r *http.Request) {
 
 	entry := mongogo.SelectOne("Id", entryId, Collection)
 	json.NewEncoder(w).Encode(entry)
+
+	w.WriteHeader(http.StatusFound)
+}
+
+func deleteAll(w http.ResponseWriter, r *http.Request) {
+	mongogo.DeleteAll(Collection)
+	w.WriteHeader(http.StatusAccepted)
 }
 
 
@@ -117,6 +124,11 @@ func main() {
 
 	router.HandleFunc("/update/flags", updateFlags).Methods("PUT")
 	router.HandleFunc("/update/value/user", updateValue).Methods("PUT")
+
+
+	router.HandleFunc("/delete/all", deleteAll).Methods("PUT")
+
+
 
 	//router.HandleFunc("/events/{id}", getOneEvent).Methods("GET")
 	//router.HandleFunc("/events/{id}", updateEvent).Methods("PATCH")
