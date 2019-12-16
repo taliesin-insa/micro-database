@@ -41,4 +41,4 @@ RUN go get -u go.mongodb.org/mongo-driver/mongo/options
 RUN go build .
 
 # Command to run the executable
-CMD ["./rest"]
+CMD ["./mongoGo"]
