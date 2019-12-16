@@ -1,7 +1,6 @@
 package main
 
 import (
-	mongogo "MongoGo/src"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -11,7 +10,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-var Client = mongogo.Connect()
+var Client = Connect()
 var Collection = Client.Database("test").Collection("trainers")
 
 func homeLink(w http.ResponseWriter, r *http.Request) {
@@ -24,7 +23,7 @@ func createEntry(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "Kindly enter data with the event title and description only in order to update")
 	}
 
-	mongogo.InsertMany(reqBody,Collection)
+	InsertMany(reqBody,Collection)
 
 	w.WriteHeader(http.StatusCreated)
 }
@@ -38,7 +37,7 @@ func updateFlags(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "Kindly enter data with the event title and description only in order to update")
 	}
 
-	mongogo.UpdateFlags(reqBody,Collection)
+	UpdateFlags(reqBody,Collection)
 
 	w.WriteHeader(http.StatusAccepted)
 }
@@ -49,7 +48,7 @@ func updateValue(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "Kindly enter data with the event title and description only in order to update")
 	}
 
-	mongogo.UpdateValue(reqBody, Collection)
+	UpdateValue(reqBody, Collection)
 
 	w.WriteHeader(http.StatusAccepted)
 }
@@ -57,14 +56,14 @@ func updateValue(w http.ResponseWriter, r *http.Request) {
 func selectById(w http.ResponseWriter, r *http.Request) {
 	entryId := mux.Vars(r)["id"]
 
-	entry := mongogo.SelectOne("Id", entryId, Collection)
+	entry := SelectOne("Id", entryId, Collection)
 	json.NewEncoder(w).Encode(entry)
 
 	w.WriteHeader(http.StatusFound)
 }
 
 func deleteAll(w http.ResponseWriter, r *http.Request) {
-	mongogo.DeleteAll(Collection)
+	DeleteAll(Collection)
 	w.WriteHeader(http.StatusAccepted)
 }
 

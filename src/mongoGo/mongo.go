@@ -1,4 +1,4 @@
-package src
+package main
 
 import (
 	"context"
@@ -216,7 +216,7 @@ func checkError(err error) {
 		panic(err)
 	}
 }
-
+/**
 func main() {
 	client := Connect()
 
@@ -272,3 +272,4 @@ func main() {
 
 	Disconnect(client)
 }
+ */
