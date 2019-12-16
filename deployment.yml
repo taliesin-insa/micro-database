@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: src
+  namespace: gitlab-managed-apps
+  labels:
+    app: go
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: go
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 33%
+  template:
+    metadata:
+      labels:
+        app: go
+    spec:
+      containers:
+        - name: go
+          image: clyde.local:5005/fleminou/testkube/master
+          ports:
+            - containerPort: 8080
