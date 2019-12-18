@@ -111,6 +111,6 @@ fabric.properties
 .idea/**/markdown-navigator/
 
 # Personnal add
-/src/mongoGo/mongoGo
+/src/micro-database/micro-database
 
 # End of https://www.gitignore.io/api/go,jetbrains

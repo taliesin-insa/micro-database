@@ -1,12 +1,13 @@
 # Dockerfile References: https://docs.docker.com/engine/reference/builder/
 
 # Start from the latest golang base image
+# Bad practice but anyway
 FROM golang:latest
 
 # Add Maintainer Info
 LABEL maintainer="Emilie HUMMEL"
 
-# Dépendances nécessaires pour compiler le fichier protocole
+# Dépendances nécessaires pour compiler le fichier protocole (pour config des trucs)
 RUN apt-get update
 RUN apt-get install -y protobuf-compiler
 RUN go get -u github.com/golang/protobuf/proto
@@ -29,9 +30,9 @@ EXPOSE 8080
 
 # Define directory
 ADD src /src
-WORKDIR /src/mongoGo
+WORKDIR /src/micro-database
 
-# Download dependancies
+# Download dependancies (if you try to build your image without following lines you will see missing packages)
 RUN go get -u github.com/gorilla/mux
 RUN go get -u go.mongodb.org/mongo-driver/bson
 RUN go get -u go.mongodb.org/mongo-driver/mongo
@@ -41,4 +42,5 @@ RUN go get -u go.mongodb.org/mongo-driver/mongo/options
 RUN go build .
 
 # Command to run the executable
-CMD ["./mongoGo"]
+CMD exec /bin/bash -c "trap : TERM INT; sleep infinity & wait"
+#CMD ["./micro-database"]
