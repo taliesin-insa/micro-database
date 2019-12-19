@@ -1,4 +1,4 @@
-package test
+package example
 
 import (
 	"context"
@@ -51,7 +51,7 @@ func main() {
 	fmt.Println("Connected to MongoDB!")
 
 	//access the DB
-	collection := client.Database("test").Collection("trainers")
+	collection := client.Database("example").Collection("trainers")
 
 	//create some trainers
 	ash := Trainer{"Ash", 10, "Pallet Town"}
