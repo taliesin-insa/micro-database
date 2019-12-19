@@ -2,7 +2,7 @@
 
 # Start from the latest golang base image
 # Bad practice but anyway
-FROM golang:latest
+FROM golang:latest AS builder
 
 # Add Maintainer Info
 LABEL maintainer="Emilie HUMMEL"
@@ -25,9 +25,6 @@ RUN go mod download
 # Copy the source from the current directory to the Working Directory inside the container
 COPY . .
 
-# Expose port 8080 to the outside world
-EXPOSE 8080
-
 # Define directory
 ADD src /src
 WORKDIR /src/micro-database
@@ -41,6 +38,19 @@ RUN go get -u go.mongodb.org/mongo-driver/mongo/options
 # Build all project
 RUN go build .
 
+# Build the docker image from a lightest one (otherwise it weights more than 1Go)
+FROM alpine:latest
+
+# Expose port 8080 to the outside world
+EXPOSE 8080
+
+# Don't really know what this does
+RUN apk --no-cache add ca-certificates
+WORKDIR /root/
+
+# Copy on the executive env
+COPY --from=builder /src/micro-database/micro-database .
+
 # Command to run the executable
-CMD exec /bin/bash -c "trap : TERM INT; sleep infinity & wait"
 #CMD ["./micro-database"]
+CMD ["ls"]
