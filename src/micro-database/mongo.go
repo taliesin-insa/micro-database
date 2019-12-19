@@ -11,20 +11,28 @@ import (
 	"strconv"
 )
 
+const (
+	HOST      = "dockercompose_mongodb_1:27017"	//TODO : find the right host (from the other container)
+	DATABASE   = "learn_db"
+	USERNAME   = ""
+	PASSWORD   = ""
+	COLLECTION = "PiFF"
+)
+
 // You will be using this Trainer type later in the program
 type Picture struct {
-	Id int
-	Type string
-	Value  string
-	Zone string
-	Children string
-	Parent string
-	Url string
-	Annotated bool
-	Corrected bool
-	SentToReco bool
-	SentToUser bool
-	Unreadable bool
+	Id int `json:"Id"`
+	Type string `json:"Type"`
+	Value  string `json:"Value"`
+	Zone string `json:"Zone"`
+	Children string `json:"Children"`
+	Parent string `json:"Parent"`
+	Url string `json:"Url"`
+	Annotated bool `json:"Annotated"`
+	Corrected bool `json:"Corrected"`
+	SentToReco bool `json:"SentToReco"`
+	SentToUser bool `json:"SentToUser"`
+	Unreadable bool `json:"Unreadable"`
 }
 
 type Modification struct {
@@ -221,7 +229,7 @@ func main() {
 	client := Connect()
 
 	//access the DB
-	collection := client.Database("test").Collection("Docs")
+	collection := client.Database("example").Collection("Docs")
 
 	//create some trainers
 	doc0 := Picture{0, "","","","","","",false,false,false,false, false}

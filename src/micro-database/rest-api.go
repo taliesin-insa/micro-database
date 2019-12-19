@@ -11,7 +11,7 @@ import (
 )
 
 var Client = Connect()
-var Collection = Client.Database("test").Collection("trainers")
+var Collection = Client.Database("example").Collection("trainers")
 
 func homeLink(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Welcome home!")
