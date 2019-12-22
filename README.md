@@ -90,7 +90,7 @@ Now you need to link your micro-database container with mongo.
 ```shell script
 docker run --name micro-database -d --link mongo:mongo micro-database
 ```
-**For now I don't think you can access the micro-database container but this is a WIP.**
+You can test the request at `http://172.17.0.3:8080/` (I got the IPAddress by doing `docker container inspect micro-database`).
 
 ## deployment.yml
 **WIP**
