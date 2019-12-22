@@ -7,7 +7,7 @@ FROM golang:latest AS builder
 # Add Maintainer Info
 LABEL maintainer="Emilie HUMMEL"
 
-# Dépendances nécessaires pour compiler le fichier protocole (pour config des trucs)
+# Dépendances nécessaires pour compiler le fichier protocole
 RUN apt-get update
 RUN apt-get install -y protobuf-compiler
 RUN go get -u github.com/golang/protobuf/proto
@@ -35,7 +35,8 @@ RUN go get -u go.mongodb.org/mongo-driver/bson
 RUN go get -u go.mongodb.org/mongo-driver/mongo
 RUN go get -u go.mongodb.org/mongo-driver/mongo/options
 
-# Build all project
+# Build all project statically (prevent some exec user process caused "no such file or directory" error)
+ENV CGO_ENABLED=0
 RUN go build .
 
 # Build the docker image from a lightest one (otherwise it weights more than 1Go)
@@ -46,11 +47,11 @@ EXPOSE 8080
 
 # Don't really know what this does
 RUN apk --no-cache add ca-certificates
+
 WORKDIR /root/
 
 # Copy on the executive env
 COPY --from=builder /src/micro-database/micro-database .
 
 # Command to run the executable
-#CMD ["./micro-database"]
-CMD ["ls"]
+CMD ["./micro-database"]
