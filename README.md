@@ -4,7 +4,6 @@ TODO :
 - Donne toute la base
 - Donne moi X entrées avec "SentToUser" == false + passe SentToUser à true
 - Delete key/value
-- Delete tout
 
 # Micro-database
 ## MongoGo API
@@ -74,6 +73,7 @@ mongodb://[username:password@]host1[:port1][,...hostN[:portN]][/[database][?opti
 Micro-database build from a golang image (the latest, even if we should decide on which version to use) where it download dependancies for protocole file, go.sum/go.mod (which manage almost all dependancies),...
 And then build the project. This image weights more than 1Go so we build another one from alpine, using our golang image as builder. We just need to copy the exec file and to launch it (with CMD).
 
+The exposed port for micro-database is 8080.
 ## Creating and running containers
 To build a new docker image for this microservice, you need to execute this line, in the same directory than the Dockerfile:
 ```shell script
