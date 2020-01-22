@@ -1,15 +1,15 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: src
+  name: database
   namespace: gitlab-managed-apps
   labels:
-    app: go
+    app: database
 spec:
   replicas: 3
   selector:
     matchLabels:
-      app: go
+      app: database
   strategy:
     type: RollingUpdate
     rollingUpdate:
@@ -18,10 +18,10 @@ spec:
   template:
     metadata:
       labels:
-        app: go
+        app: database
     spec:
       containers:
-        - name: go
-          image: clyde.local:5005/fleminou/testkube/master
+        - name: database
+          image: clyde.local:5005/taliesin/micro-database/master
           ports:
             - containerPort: 8080
