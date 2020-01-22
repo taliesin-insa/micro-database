@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	HOST      = "mongodb://mongo:27017"	//TODO : find the right host (from the other container)
+	HOST       = "mongodb://mongo:27017" //TODO : find the right host (from the other container)
 	DATABASE   = "learn_db"
 	USERNAME   = ""
 	PASSWORD   = ""
@@ -47,9 +47,9 @@ type Annotation struct {
 }
 
 /**
-	From a json flow, insert one entry in the database -> Useless
-	TODO : vérification des champs avant l'insertion
- */
+From a json flow, insert one entry in the database -> Useless
+TODO : vérification des champs avant l'insertion
+*/
 func InsertOne(b []byte, collection *mongo.Collection) {
 	var pic Picture
 	err := json.Unmarshal(b, &pic)
@@ -63,6 +63,7 @@ func InsertOne(b []byte, collection *mongo.Collection) {
 /**
 From a json flow, insert multiple entries in the database
 TODO : vérification des champs avant l'insertion
+byte : Flot JSON
 */
 func InsertMany(b []byte, collection *mongo.Collection) {
 	var pics []interface{}
@@ -131,17 +132,17 @@ func FindMany(key string, value int, collection *mongo.Collection) []Picture {
 }
 
 /**
-	Modify the différents flags
- */
+Modify the différents flags
+byte : Flot JSON a list of Modification objects
+*/
 func UpdateFlags(b []byte, collection *mongo.Collection) {
 	var modifications []Modification
 	var filter, update bson.D
-	err := json.Unmarshal(b,&modifications)
+	err := json.Unmarshal(b, &modifications)
 	checkError(err)
 
-
 	for _, modif := range modifications {
-		filter = bson.D{{"Id",modif.Id}}
+		filter = bson.D{{"Id", modif.Id}}
 		update = bson.D{
 			{"$set", bson.D{
 				{modif.Flag, modif.Value},
@@ -154,17 +155,18 @@ func UpdateFlags(b []byte, collection *mongo.Collection) {
 }
 
 /**
-	Annote multiple documents. Take a JSON comporting the id of annotated documents and the value of annotation text.
-	Set the annotated flag to true
- */
+Annote multiple documents.
+Set the annotated flag to true
+byte : Flot JSON a list of Annotation objects
+*/
 func UpdateValue(b []byte, collection *mongo.Collection) {
 	var annotations []Annotation
 	var filter, update bson.D
-	err := json.Unmarshal(b,&annotations)
+	err := json.Unmarshal(b, &annotations)
 	checkError(err)
 
 	for _, annot := range annotations {
-		filter = bson.D{{"Id",annot.Id}}
+		filter = bson.D{{"Id", annot.Id}}
 		update = bson.D{
 			{"$set", bson.D{
 				{"Value", annot.Value},
@@ -177,6 +179,9 @@ func UpdateValue(b []byte, collection *mongo.Collection) {
 	}
 }
 
+/**
+  Flush the database
+*/
 func DeleteAll(collection *mongo.Collection) {
 	deleteResult, err := collection.DeleteMany(context.TODO(), bson.D{{}})
 	checkError(err)
@@ -201,7 +206,7 @@ func Disconnect(client *mongo.Client) {
 	fmt.Println("Connection to MongoDB closed.")
 }
 
-func Connect() *mongo.Client{
+func Connect() *mongo.Client {
 	// Set client options
 	//clientOptions := options.Client().ApplyURI("mongodb://localhost:27017")
 	clientOptions := options.Client().ApplyURI(HOST)
@@ -212,7 +217,6 @@ func Connect() *mongo.Client{
 
 	// Check the connection
 	err = client.Ping(context.TODO(), nil)
-
 	checkError(err)
 
 	fmt.Println("Connected to MongoDB!")
@@ -225,7 +229,8 @@ func checkError(err error) {
 		panic(err)
 	}
 }
-/**
+
+/*
 func main() {
 	client := Connect()
 
@@ -268,17 +273,17 @@ func main() {
 
 	UpdateFlags(modif, collection)
 
-	SelectOne("Id", "2", collection)
+	FindOne("Id", "2", collection)
 
 	modification = `[{"Id": 1,"Value": "This text is annotated"}]`
 	modif = []byte(modification)
 
 	UpdateValue(modif, collection)
 
-	SelectOne("Id", "1", collection)
+	FindOne("Id", "1", collection)
 
 	DeleteAll(collection)
 
 	Disconnect(client)
 }
- */
+*/
