@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/gorilla/mux"
 )
@@ -23,11 +24,10 @@ func createEntry(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "Kindly enter data with the event title and description only in order to update")
 	}
 
-	InsertMany(reqBody,Collection)
+	InsertMany(reqBody, Collection)
 
 	w.WriteHeader(http.StatusCreated)
 }
-
 
 func updateFlags(w http.ResponseWriter, r *http.Request) {
 	reqBody, err := ioutil.ReadAll(r.Body)
@@ -35,7 +35,7 @@ func updateFlags(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "Kindly enter data with the event title and description only in order to update")
 	}
 
-	UpdateFlags(reqBody,Collection)
+	UpdateFlags(reqBody, Collection)
 
 	w.WriteHeader(http.StatusAccepted)
 }
@@ -54,7 +54,20 @@ func updateValue(w http.ResponseWriter, r *http.Request) {
 func selectById(w http.ResponseWriter, r *http.Request) {
 	entryId := mux.Vars(r)["id"]
 
-	entry := SelectOne("Id", entryId, Collection)
+	entry := FindOne("Id", entryId, Collection)
+	json.NewEncoder(w).Encode(entry)
+
+	w.WriteHeader(http.StatusFound)
+}
+
+func newPage(w http.ResponseWriter, r *http.Request) {
+	entryAmnt := mux.Vars(r)["amount"]
+	amount, err := strconv.Atoi(entryAmnt)
+	if err != nil {
+		fmt.Fprintf(w, "Error while converting argument to number")
+	}
+
+	entry := FindManyUnused(amount, Collection)
 	json.NewEncoder(w).Encode(entry)
 
 	w.WriteHeader(http.StatusFound)
@@ -64,7 +77,6 @@ func deleteAll(w http.ResponseWriter, r *http.Request) {
 	DeleteAll(Collection)
 	w.WriteHeader(http.StatusAccepted)
 }
-
 
 //func getOneEvent(w http.ResponseWriter, r *http.Request) {
 //	eventID := mux.Vars(r)["id"]
@@ -111,21 +123,20 @@ func deleteAll(w http.ResponseWriter, r *http.Request) {
 //	}
 //}
 
+// Actual API
 func main() {
 
 	// Define the routing
 	router := mux.NewRouter().StrictSlash(true)
-	router.HandleFunc("/", homeLink)
-	router.HandleFunc("/insert", createEntry).Methods("POST")
-	router.HandleFunc("/select/{id}", selectById).Methods("GET")
+	router.HandleFunc("/db/", homeLink)
+	router.HandleFunc("/db/insert", createEntry).Methods("POST")
+	router.HandleFunc("/db/select/{id}", selectById).Methods("GET")
+	router.HandleFunc("/db/retrieve/snippets/{amount}", newPage).Methods("GET")
 
-	router.HandleFunc("/update/flags", updateFlags).Methods("PUT")
-	router.HandleFunc("/update/value/user", updateValue).Methods("PUT")
+	router.HandleFunc("/db/update/flags", updateFlags).Methods("PUT")
+	router.HandleFunc("/db/update/value/user", updateValue).Methods("PUT")
 
-
-	router.HandleFunc("/delete/all", deleteAll).Methods("PUT")
-
-
+	router.HandleFunc("/db/delete/all", deleteAll).Methods("PUT")
 
 	//router.HandleFunc("/events/{id}", getOneEvent).Methods("GET")
 	//router.HandleFunc("/events/{id}", updateEvent).Methods("PATCH")

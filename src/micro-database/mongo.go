@@ -73,7 +73,7 @@ func InsertMany(b []byte, collection *mongo.Collection) {
 	fmt.Println("Inserted multiple documents: ", insertManyResult.InsertedIDs)
 }
 
-func SelectOne(key, value string, collection *mongo.Collection) Picture{
+func FindOne(key, value string, collection *mongo.Collection) Picture {
 	filter := bson.D{{}}
 	if key == "Id" {
 		id, _ := strconv.Atoi(value)
@@ -251,9 +251,9 @@ func main() {
 
 	InsertMany([]byte(doc4), collection)
 
-	//SelectOne("id", "0", collection) // WHY does name need to be in lowercase for the first one ???
+	//FindOne("id", "0", collection) // WHY does name need to be in lowercase for the first one ???
 
-	SelectOne("Id","1", collection)
+	FindOne("Id","1", collection)
 
 	FindMany("Id",4, collection)
 
