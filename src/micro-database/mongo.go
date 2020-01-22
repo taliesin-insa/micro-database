@@ -120,7 +120,45 @@ func FindOne(key, value string, collection *mongo.Collection) Picture {
 	return result
 }
 
-func FindMany(key string, value int, collection *mongo.Collection) []Picture {
+func FindManyUnused(amount int, collection *mongo.Collection) []Picture {
+	// Pass these options to the Find method
+	findOptions := options.Find()
+	findOptions.SetLimit(int64(amount))
+
+	// Here's an array in which you can store the decoded documents
+	var results []Picture
+
+	// Passing bson.D{{}} as the filter matches all documents in the collection
+	cur, err := collection.Find(context.TODO(), bson.D{{"Annotated", false}}, findOptions)
+	// TODO In fine should be on "SentToUser"
+	checkError(err)
+
+	// Finding multiple documents returns a cursor
+	// Iterating through the cursor allows us to decode documents one at a time
+	for cur.Next(context.TODO()) {
+
+		// create a value into which the single document can be decoded
+		var elem Picture
+		err := cur.Decode(&elem)
+		if err != nil {
+			log.Println(err)
+		}
+
+		results = append(results, elem)
+	}
+
+	if err := cur.Err(); err != nil {
+		log.Println(err)
+	} else {
+		fmt.Printf("Found multiple documents : %+v\n", results)
+	}
+	// Close the cursor once finished
+	cur.Close(context.TODO())
+
+	return results
+}
+
+func FindList(key string, value int, collection *mongo.Collection) []Picture {
 
 	// Pass these options to the Find method
 	findOptions := options.Find()
