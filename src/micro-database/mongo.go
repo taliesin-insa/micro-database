@@ -11,6 +11,8 @@ import (
 	"strconv"
 )
 
+// mongodb://[username:password@]host1[:port1][,...hostN[:portN]][/[database][?options]]
+const URI = "mongodb://mongo:27017/"
 const (
 	HOST       = "mongodb://mongo:27017" //TODO : find the right host (from the other container)
 	DATABASE   = "learn_db"
@@ -274,7 +276,7 @@ func Disconnect(client *mongo.Client) {
 func Connect() *mongo.Client {
 	// Set client options
 	//clientOptions := options.Client().ApplyURI("mongodb://localhost:27017")
-	clientOptions := options.Client().ApplyURI(HOST)
+	clientOptions := options.Client().ApplyURI(URI)
 
 	// Connect to MongoDB
 	client, err := mongo.Connect(context.TODO(), clientOptions)
