@@ -19,30 +19,54 @@ const (
 	COLLECTION = "PiFF"
 )
 
+type Meta struct {
+	Type string
+	URL  string
+}
+
+type Location struct {
+	Type    string
+	Polygon [][2]int
+	Id      string
+}
+
+type Data struct {
+	Type       string
+	LocationId string
+	Value      string
+	Id         string
+}
+
+type PiFFStruct struct {
+	Meta     Meta
+	Location []Location
+	Data     []Data
+	Children []int
+	Parent   int
+}
+
 // You will be using this Trainer type later in the program
 type Picture struct {
-	Id int `json:"Id"`
-	Type string `json:"Type"`
-	Value  string `json:"Value"`
-	Zone string `json:"Zone"`
-	Children string `json:"Children"`
-	Parent string `json:"Parent"`
+	// Piff
+	PiFF PiFFStruct `json:"PiFF"`
+	// Url fileserver
 	Url string `json:"Url"`
-	Annotated bool `json:"Annotated"`
-	Corrected bool `json:"Corrected"`
+	// Flags
+	Annotated  bool `json:"Annotated"`
+	Corrected  bool `json:"Corrected"`
 	SentToReco bool `json:"SentToReco"`
 	SentToUser bool `json:"SentToUser"`
 	Unreadable bool `json:"Unreadable"`
 }
 
 type Modification struct {
-	Id int
-	Flag string
+	Id    int
+	Flag  string
 	Value bool
 }
 
 type Annotation struct {
-	Id int
+	Id    int
 	Value string
 }
 
@@ -52,8 +76,11 @@ TODO : vérification des champs avant l'insertion
 */
 func InsertOne(b []byte, collection *mongo.Collection) {
 	var pic Picture
-	err := json.Unmarshal(b, &pic)
+	var piff PiFFStruct
+	err := json.Unmarshal(b, &piff)
 	checkError(err)
+	pic.PiFF = piff
+
 	insertResult, err := collection.InsertOne(context.TODO(), pic)
 	checkError(err)
 
