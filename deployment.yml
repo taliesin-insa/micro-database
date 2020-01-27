@@ -25,3 +25,10 @@ spec:
           image: clyde.local:5005/taliesin/micro-database/master
           ports:
             - containerPort: 8080
+          volumeMounts:
+            - mountPath: "/snippets/"
+              name: file-server
+      volumes:
+        - name: file-server
+          persistentVolumeClaim:
+            claimName: file-server-claim              
