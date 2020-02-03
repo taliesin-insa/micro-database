@@ -4,11 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/simagix/keyhole/mdb"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/mongo/readpref"
 	"log"
 	"strconv"
+	"time"
 )
 
 // mongodb://[username:password@]host1[:port1][,...hostN[:portN]][/[database][?options]]
@@ -153,14 +156,22 @@ func FindOne(key, value string, collection *mongo.Collection) Picture {
 
 func FindManyUnused(amount int, collection *mongo.Collection) []Picture {
 	// Pass these options to the Find method
-	findOptions := options.Find()
-	findOptions.SetLimit(int64(amount))
+	pipeline := `[{
+		"$match": {
+			"Annotated": false
+		}
+	},{
+		"$sample" : {
+				"size" : amount
+		}
+	}]`
+	opts := options.Aggregate()
 
 	// Here's an array in which you can store the decoded documents
 	var results []Picture
 
 	// Passing bson.D{{}} as the filter matches all documents in the collection
-	cur, err := collection.Find(context.TODO(), bson.D{{"Annotated", false}}, findOptions)
+	cur, err := collection.Aggregate(context.TODO(), mdb.MongoPipeline(pipeline), opts)
 	// TODO In fine should be on "SentToUser"
 	checkError(err)
 
