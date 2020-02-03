@@ -12,14 +12,8 @@ import (
 )
 
 // mongodb://[username:password@]host1[:port1][,...hostN[:portN]][/[database][?options]]
-const URI = "mongodb://mongo:27017/"
-const (
-	HOST       = "mongodb://mongo:27017" //TODO : find the right host (from the other container)
-	DATABASE   = "learn_db"
-	USERNAME   = ""
-	PASSWORD   = ""
-	COLLECTION = "PiFF"
-)
+const URI_SUR_CLUSTER = "mongodb://pinky.local:27017/" //TODO : ne marche pas encore à cause de la config
+const URI_TESTS_LOCAUX = "mongodb://localhost:27017/"
 
 type Meta struct {
 	Type string
@@ -70,6 +64,41 @@ type Modification struct {
 type Annotation struct {
 	Id    int
 	Value string
+}
+
+func checkError(err error) {
+	if err != nil {
+		panic(err)
+	}
+}
+
+func Connect() *mongo.Client {
+	// Set client options
+	//clientOptions := options.Client().ApplyURI("mongodb://localhost:27017")
+	URI := URI_SUR_CLUSTER
+	clientOptions := options.Client().ApplyURI(URI)
+
+	// Connect to MongoDB
+	client, err := mongo.Connect(context.TODO(), clientOptions)
+	checkError(err)
+
+	fmt.Println("Establishing connection to mongodb on " + URI)
+
+	// Check the connection
+	ctx, _ := context.WithTimeout(context.Background(), 2*time.Second)
+	err = client.Ping(ctx, readpref.Primary())
+	checkError(err)
+
+	fmt.Println("Connection successful!")
+
+	return client
+}
+
+func Disconnect(client *mongo.Client) {
+	//Disconnection
+	err := client.Disconnect(context.TODO())
+	checkError(err)
+	fmt.Println("Connection to MongoDB closed.")
 }
 
 /**
@@ -263,37 +292,6 @@ func DeleteOne(key string, value int, collection *mongo.Collection) {
 		log.Println(err)
 	} else {
 		fmt.Printf("Deleted %+v document\n", del.DeletedCount)
-	}
-}
-
-func Disconnect(client *mongo.Client) {
-	//Disconnection
-	err := client.Disconnect(context.TODO())
-	checkError(err)
-	fmt.Println("Connection to MongoDB closed.")
-}
-
-func Connect() *mongo.Client {
-	// Set client options
-	//clientOptions := options.Client().ApplyURI("mongodb://localhost:27017")
-	clientOptions := options.Client().ApplyURI(URI)
-
-	// Connect to MongoDB
-	client, err := mongo.Connect(context.TODO(), clientOptions)
-	checkError(err)
-
-	// Check the connection
-	err = client.Ping(context.TODO(), nil)
-	checkError(err)
-
-	fmt.Println("Connected to MongoDB!")
-
-	return client
-}
-
-func checkError(err error) {
-	if err != nil {
-		panic(err)
 	}
 }
 
