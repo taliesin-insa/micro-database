@@ -12,9 +12,9 @@ import (
 )
 
 // mongodb://[username:password@]host1[:port1][,...hostN[:portN]][/[database][?options]]
-const URI = "mongodb://mongo:27017/"
+const URI = "mongodb://10.133.33.50:27017/"
 const (
-	HOST       = "mongodb://mongo:27017" //TODO : find the right host (from the other container)
+	HOST       = "mongodb://10.133.33.50:27017"
 	DATABASE   = "learn_db"
 	USERNAME   = ""
 	PASSWORD   = ""
