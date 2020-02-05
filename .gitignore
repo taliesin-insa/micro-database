@@ -112,5 +112,6 @@ fabric.properties
 
 # Personnal add
 /src/micro-database/micro-database
+.idea/inspectionProfiles/*
 
 # End of https://www.gitignore.io/api/go,jetbrains
