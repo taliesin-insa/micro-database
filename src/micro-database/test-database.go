@@ -20,7 +20,7 @@ func TestAll(t *testing.T) {
 		Children: nil,
 		Parent:   0,
 	}
-	doc0 := Picture{p0, "", false, false, false, false, false}
+	doc0 := Picture{nil, p0, "", false, false, false, false}
 
 	//doc1 := Picture{1, "","","","","","",false,false,false,false, false}
 	//doc2 := Picture{2, "","","","","","",false,false,false,false, false}
