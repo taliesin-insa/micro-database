@@ -46,6 +46,8 @@ type PiFFStruct struct {
 
 // You will be using this Trainer type later in the program
 type Picture struct {
+	// Id in db
+	Id int `json:"Id"`
 	// Piff
 	PiFF PiFFStruct `json:"PiFF"`
 	// Url fileserver
@@ -54,7 +56,6 @@ type Picture struct {
 	Annotated  bool `json:"Annotated"`
 	Corrected  bool `json:"Corrected"`
 	SentToReco bool `json:"SentToReco"`
-	SentToUser bool `json:"SentToUser"`
 	Unreadable bool `json:"Unreadable"`
 }
 
