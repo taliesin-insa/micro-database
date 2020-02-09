@@ -83,6 +83,23 @@ func newPage(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusFound)
 }
 
+func getAll(w http.ResponseWriter, r *http.Request) {
+	entry := FindAll(Database)
+	json.NewEncoder(w).Encode(entry)
+
+	w.WriteHeader(http.StatusFound)
+}
+
+func status(w http.ResponseWriter, r *http.Request) {
+	ctx, _ := context.WithTimeout(context.Background(), 3*time.Second)
+	err := Client.Ping(ctx, readpref.Primary())
+	if err != nil {
+		w.WriteHeader(http.StatusRequestTimeout)
+	} else {
+		w.WriteHeader(http.StatusContinue)
+	}
+}
+
 func deleteAll(w http.ResponseWriter, r *http.Request) {
 	DeleteAll(Database)
 	w.WriteHeader(http.StatusAccepted)
@@ -142,7 +159,9 @@ func main() {
 	router.HandleFunc("/db/insert", createEntry).Methods("POST")
 
 	router.HandleFunc("/db/select/{id}", selectById).Methods("GET")
+	router.HandleFunc("/db/retrieve/all", getAll).Methods("GET")
 	router.HandleFunc("/db/retrieve/snippets/{amount}", newPage).Methods("GET")
+	router.HandleFunc("/db/status", status).Methods("GET")
 
 	router.HandleFunc("/db/update/flags", updateFlags).Methods("PUT")
 	router.HandleFunc("/db/update/value/user", updateValue).Methods("PUT")

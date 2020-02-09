@@ -201,6 +201,43 @@ func FindManyUnused(amount int, collection *mongo.Collection) []Picture {
 	return results
 }
 
+func FindAll(collection *mongo.Collection) []Picture {
+	// Pass these options to the Find method
+	findOptions := options.Find()
+	//findOptions.SetLimit(2)
+
+	// Here's an array in which you can store the decoded documents
+	var results []Picture
+
+	// Passing bson.D{{}} as the filter matches all documents in the collection
+	cur, err := collection.Find(context.TODO(), bson.D{}, findOptions)
+	checkError(err)
+
+	// Finding multiple documents returns a cursor
+	// Iterating through the cursor allows us to decode documents one at a time
+	for cur.Next(context.TODO()) {
+
+		// create a value into which the single document can be decoded
+		var elem Picture
+		err := cur.Decode(&elem)
+		if err != nil {
+			log.Println(err)
+		}
+
+		results = append(results, elem)
+	}
+
+	if err := cur.Err(); err != nil {
+		log.Println(err)
+	} else {
+		fmt.Printf("Found multiple documents : %+v\n", results)
+	}
+	// Close the cursor once finished
+	cur.Close(context.TODO())
+
+	return results
+}
+
 func FindList(key string, value int, collection *mongo.Collection) []Picture {
 
 	// Pass these options to the Find method
