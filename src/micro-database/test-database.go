@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"testing"
 )
 
@@ -20,7 +21,7 @@ func TestAll(t *testing.T) {
 		Children: nil,
 		Parent:   0,
 	}
-	doc0 := Picture{nil, p0, "", false, false, false, false}
+	doc0 := Picture{*new(primitive.ObjectID), p0, "", false, false, false, false}
 
 	//doc1 := Picture{1, "","","","","","",false,false,false,false, false}
 	//doc2 := Picture{2, "","","","","","",false,false,false,false, false}

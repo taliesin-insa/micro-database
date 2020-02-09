@@ -39,7 +39,7 @@ type PiFFStruct struct {
 ```go
 /* Our working structure */
 type Picture struct {
-	Id int `json:"Id"`
+	_id primitive.ObjectID `bson:"_id" json:"_id,omitempty"`
 	// Piff
 	PiFF PiFFStruct `json:"PiFF"`
 	// Url fileserver
@@ -50,6 +50,7 @@ type Picture struct {
 	SentToReco bool `json:"SentToReco"`
 	Unreadable bool `json:"Unreadable"`
 }
+Be careful, other people not working with the mongo module should use []byte instead of ObjectID
 
 ```
 

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/simagix/keyhole/mdb"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
@@ -47,7 +48,7 @@ type PiFFStruct struct {
 // You will be using this Trainer type later in the program
 type Picture struct {
 	// Id in db
-	Id int `json:"Id"`
+	_id primitive.ObjectID `bson:"_id" json:"_id,omitempty"`
 	// Piff
 	PiFF PiFFStruct `json:"PiFF"`
 	// Url fileserver
