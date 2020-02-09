@@ -157,15 +157,16 @@ func FindOne(key, value string, collection *mongo.Collection) Picture {
 
 func FindManyUnused(amount int, collection *mongo.Collection) []Picture {
 	// Pass these options to the Find method
-	pipeline := `[{
+	pipeline := fmt.Sprintf(`[{
 		"$match": {
 			"Annotated": false
+			"Unreadable": false
 		}
 	},{
 		"$sample" : {
-				"size" : amount
+				"size" : %v
 		}
-	}]`
+	}]`, amount)
 	opts := options.Aggregate()
 
 	// Here's an array in which you can store the decoded documents
