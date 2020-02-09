@@ -10,21 +10,49 @@ TODO :
 The different structs define how the JSON files must be parsed :
 ```go
 /* Parse PiFF files */
-type Picture struct {
-	Id int
+type Meta struct {
 	Type string
-	Value  string
-	Zone string
-	Children string
-	Parent string
-	Url string
-	Annotated bool
-	Corrected bool
-	SentToReco bool
-	SentToUser bool
-	Unreadable bool
+	URL  string
+}
+
+type Location struct {
+	Type    string
+	Polygon [][2]int
+	Id      string
+}
+
+type Data struct {
+	Type       string
+	LocationId string
+	Value      string
+	Id         string
+}
+
+type PiFFStruct struct {
+	Meta     Meta
+	Location []Location
+	Data     []Data
+	Children []int
+	Parent   int
 }
 ```
+```go
+/* Our working structure */
+type Picture struct {
+	Id int `json:"Id"`
+	// Piff
+	PiFF PiFFStruct `json:"PiFF"`
+	// Url fileserver
+	Url string `json:"Url"`
+	// Flags
+	Annotated  bool `json:"Annotated"`
+	Corrected  bool `json:"Corrected"`
+	SentToReco bool `json:"SentToReco"`
+	Unreadable bool `json:"Unreadable"`
+}
+
+```
+
 ```go
 /* Update flags */
 type Modification struct {
@@ -47,12 +75,15 @@ The rest API transform rest request into mongoGo API method call.
 
 The routes are : 
 
-- **"/"** for home link (used for testing)
-- **"/insert"** to insert a JSON file (PiFF array) into the database
-- **"/select/{id}"** to return a PiFF with specific id
-- **"/update/flags"** to update different flags based on a JSON file (Modification array)
-- **"/update/value/user"** to annotate some PiFF based on a JSON file (Annotation array)
-- **"/delete/all"** to clear the database
+- **"/db/"** for home link (used for testing)
+- **"/db/insert"** to insert a JSON file (PiFF array) into the database
+- **"/db/select/{id}"** to return a PiFF with specific id
+- **"/db/retrieve/all"** to return the whole database
+- **"/db/retrieve/snippets/{amount}"** to return a certain amount of random non-annotated snippets
+- **"/db/status"** to check if the db is still reachable
+- **"/db/update/flags"** to update different flags based on a JSON file (Modification array)
+- **"/db/update/value/user"** to annotate some PiFF based on a JSON file (Annotation array)
+- **"/db/delete/all"** to clear the database
 
 ### DB user
 In case we configure a proper login system for the database I add an admin user (on my own container).
