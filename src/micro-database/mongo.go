@@ -47,7 +47,7 @@ type PiFFStruct struct {
 // You will be using this Trainer type later in the program
 type Picture struct {
 	// Id in db
-	_id primitive.ObjectID `bson:"_id" json:"_id,omitempty"`
+	_id primitive.ObjectID `bson:"_id" json:"id"`
 	// Piff
 	PiFF PiFFStruct `json:"PiFF"`
 	// Url fileserver
