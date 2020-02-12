@@ -24,85 +24,134 @@ func homeLink(w http.ResponseWriter, r *http.Request) {
 func createEntry(w http.ResponseWriter, r *http.Request) {
 	reqBody, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		fmt.Fprintf(w, "Couldn't read request body")
+		w.Write([]byte(err.Error()))
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	InsertMany(reqBody, Database)
+	err = InsertMany(reqBody, Database)
+	if err != nil {
+		w.Write([]byte(err.Error()))
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 
 	w.WriteHeader(http.StatusCreated)
-}
-
-func updateFlags(w http.ResponseWriter, r *http.Request) {
-	reqBody, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		fmt.Fprintf(w, "Couldn't read request body")
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	UpdateFlags(reqBody, Database)
-
-	w.WriteHeader(http.StatusAccepted)
-}
-
-func updateValue(w http.ResponseWriter, r *http.Request) {
-	reqBody, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		fmt.Fprintf(w, "Couldn't read request body")
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	UpdateValue(reqBody, Database)
-
-	w.WriteHeader(http.StatusAccepted)
 }
 
 func selectById(w http.ResponseWriter, r *http.Request) {
 	entryId := mux.Vars(r)["id"]
 
-	entry := FindOne("Id", entryId, Database)
-	json.NewEncoder(w).Encode(entry)
+	entry, err := FindOne(entryId, Database)
+	if err != nil {
+		w.Write([]byte(err.Error()))
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
 
-	w.WriteHeader(http.StatusFound)
+	err = json.NewEncoder(w).Encode(entry)
+	if err != nil {
+		w.Write([]byte(err.Error()))
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
 }
 
 func newPage(w http.ResponseWriter, r *http.Request) {
 	entryAmnt := mux.Vars(r)["amount"]
 	amount, err := strconv.Atoi(entryAmnt)
 	if err != nil {
-		fmt.Fprintf(w, "Error while converting argument to number")
+		w.Write([]byte(err.Error()))
 		w.WriteHeader(http.StatusBadRequest)
 	}
 
-	entry := FindManyUnused(amount, Database)
-	json.NewEncoder(w).Encode(entry)
+	entry, err := FindManyUnused(amount, Database)
+	if err != nil {
+		w.Write([]byte(err.Error()))
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 
-	w.WriteHeader(http.StatusFound)
+	err = json.NewEncoder(w).Encode(entry)
+	if err != nil {
+		w.Write([]byte(err.Error()))
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
 }
 
 func getAll(w http.ResponseWriter, r *http.Request) {
-	entry := FindAll(Database)
-	json.NewEncoder(w).Encode(entry)
+	entry, err := FindAll(Database)
+	if err != nil {
+		w.Write([]byte(err.Error()))
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 
-	w.WriteHeader(http.StatusFound)
+	err = json.NewEncoder(w).Encode(entry)
+	if err != nil {
+		w.Write([]byte(err.Error()))
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
+func updateFlags(w http.ResponseWriter, r *http.Request) {
+	reqBody, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		w.Write([]byte(err.Error()))
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	err = UpdateFlags(reqBody, Database)
+	if err != nil {
+		w.Write([]byte(err.Error()))
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func updateValue(w http.ResponseWriter, r *http.Request) {
+	reqBody, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		w.Write([]byte(err.Error()))
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	err = UpdateValue(reqBody, Database)
+	if err != nil {
+		w.Write([]byte(err.Error()))
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func status(w http.ResponseWriter, r *http.Request) {
 	ctx, _ := context.WithTimeout(context.Background(), 3*time.Second)
 	err := Client.Ping(ctx, readpref.Primary())
 	if err != nil {
-		w.WriteHeader(http.StatusRequestTimeout)
+		w.Write([]byte("{ 'isDBUp': false }"))
 	} else {
-		w.WriteHeader(http.StatusContinue)
+		w.Write([]byte("{ 'isDBUp': true }"))
 	}
+	w.WriteHeader(http.StatusOK)
 }
 
 func deleteAll(w http.ResponseWriter, r *http.Request) {
 	DeleteAll(Database)
-	w.WriteHeader(http.StatusAccepted)
+	w.WriteHeader(http.StatusNoContent)
 }
 
 //func getOneEvent(w http.ResponseWriter, r *http.Request) {

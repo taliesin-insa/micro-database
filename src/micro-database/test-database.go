@@ -42,9 +42,9 @@ func TestAll(t *testing.T) {
 		InsertMany([]byte(doc4), collection)
 	*/
 
-	FindOne("id", "0", collection) // WHY does name need to be in lowercase for the first one ???
+	FindOne("0", collection) // WHY does name need to be in lowercase for the first one ???
 
-	FindOne("Id", "1", collection)
+	FindOne("1", collection)
 
 	//FindMany("Id",4, collection)
 
@@ -58,14 +58,14 @@ func TestAll(t *testing.T) {
 
 	UpdateFlags(modif, collection)
 
-	FindOne("Id", "2", collection)
+	FindOne("2", collection)
 
 	modification = `[{"Id": 1,"Value": "This text is annotated"}]`
 	modif = []byte(modification)
 
 	UpdateValue(modif, collection)
 
-	FindOne("Id", "1", collection)
+	FindOne("1", collection)
 
 	DeleteAll(collection)
 

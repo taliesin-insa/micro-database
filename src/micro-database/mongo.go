@@ -11,7 +11,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 	"log"
-	"strconv"
 	"time"
 )
 
@@ -61,14 +60,14 @@ type Picture struct {
 }
 
 type Modification struct {
-	Id    int
-	Flag  string
-	Value bool
+	Id    int    `json:"id"`
+	Flag  string `json:"flag"`
+	Value bool   `json:"value"`
 }
 
 type Annotation struct {
-	Id    int
-	Value string
+	Id    int    `json:"id"`
+	Value string `json:"value"`
 }
 
 func checkError(err error) {
@@ -108,55 +107,58 @@ func Disconnect(client *mongo.Client) {
 
 /**
 From a json flow, insert one entry in the database -> Useless
-TODO : vérification des champs avant l'insertion
 */
-func InsertOne(b []byte, collection *mongo.Collection) {
+func InsertOne(b []byte, collection *mongo.Collection) error {
 	var pic Picture
 	var piff PiFFStruct
+
 	err := json.Unmarshal(b, &piff)
-	checkError(err)
+	if err != nil {
+		return err
+	}
+
 	pic.PiFF = piff
 
 	insertResult, err := collection.InsertOne(context.TODO(), pic)
-	checkError(err)
+	if err != nil {
+		return err
+	}
 
 	fmt.Println("Inserted a single document: ", insertResult.InsertedID)
+	return nil
 }
 
 /**
 From a json flow, insert multiple entries in the database
-TODO : vérification des champs avant l'insertion
 byte : Flot JSON
 */
-func InsertMany(b []byte, collection *mongo.Collection) {
+func InsertMany(b []byte, collection *mongo.Collection) error {
 	var pics []interface{}
 	err := json.Unmarshal(b, &pics)
 	insertManyResult, err := collection.InsertMany(context.TODO(), pics)
-	checkError(err)
+	if err != nil {
+		return err
+	}
 
 	fmt.Println("Inserted multiple documents: ", insertManyResult.InsertedIDs)
+	return nil
 }
 
-func FindOne(key, value string, collection *mongo.Collection) Picture {
-	filter := bson.D{{}}
-	if key == "Id" {
-		id, _ := strconv.Atoi(value)
-		filter = bson.D{{key, id}}
-	} else {
-		filter = bson.D{{key, value}}
-	}
+func FindOne(id string, collection *mongo.Collection) (Picture, error) {
+	filter := bson.D{{"id", id}}
 	var result Picture
 
 	err := collection.FindOne(context.TODO(), filter).Decode(&result)
 	if err != nil {
-		log.Println(err)
+		return Picture{}, err
 	} else {
 		fmt.Printf("Found a single document: %+v\n", result)
 	}
-	return result
+
+	return result, nil
 }
 
-func FindManyUnused(amount int, collection *mongo.Collection) []Picture {
+func FindManyUnused(amount int, collection *mongo.Collection) ([]Picture, error) {
 	// Pass these options to the Find method
 	pipeline := fmt.Sprintf(`[{
 		"$match": {
@@ -175,8 +177,9 @@ func FindManyUnused(amount int, collection *mongo.Collection) []Picture {
 
 	// Passing bson.D{{}} as the filter matches all documents in the collection
 	cur, err := collection.Aggregate(context.TODO(), mdb.MongoPipeline(pipeline), opts)
-	// TODO In fine should be on "SentToUser"
-	checkError(err)
+	if err != nil {
+		return nil, err
+	}
 
 	// Finding multiple documents returns a cursor
 	// Iterating through the cursor allows us to decode documents one at a time
@@ -186,24 +189,24 @@ func FindManyUnused(amount int, collection *mongo.Collection) []Picture {
 		var elem Picture
 		err := cur.Decode(&elem)
 		if err != nil {
-			log.Println(err)
+			return nil, err
 		}
 
 		results = append(results, elem)
 	}
 
 	if err := cur.Err(); err != nil {
-		log.Println(err)
+		return nil, err
 	} else {
 		fmt.Printf("Found multiple documents : %+v\n", results)
 	}
 	// Close the cursor once finished
 	cur.Close(context.TODO())
 
-	return results
+	return results, nil
 }
 
-func FindAll(collection *mongo.Collection) []Picture {
+func FindAll(collection *mongo.Collection) ([]Picture, error) {
 	// Pass these options to the Find method
 	findOptions := options.Find()
 	//findOptions.SetLimit(2)
@@ -213,7 +216,9 @@ func FindAll(collection *mongo.Collection) []Picture {
 
 	// Passing bson.D{{}} as the filter matches all documents in the collection
 	cur, err := collection.Find(context.TODO(), bson.D{}, findOptions)
-	checkError(err)
+	if err != nil {
+		return nil, err
+	}
 
 	// Finding multiple documents returns a cursor
 	// Iterating through the cursor allows us to decode documents one at a time
@@ -223,21 +228,21 @@ func FindAll(collection *mongo.Collection) []Picture {
 		var elem Picture
 		err := cur.Decode(&elem)
 		if err != nil {
-			log.Println(err)
+			return nil, err
 		}
 
 		results = append(results, elem)
 	}
 
 	if err := cur.Err(); err != nil {
-		log.Println(err)
+		return nil, err
 	} else {
 		fmt.Printf("Found multiple documents : %+v\n", results)
 	}
 	// Close the cursor once finished
 	cur.Close(context.TODO())
 
-	return results
+	return results, nil
 }
 
 func FindList(key string, value int, collection *mongo.Collection) []Picture {
@@ -282,23 +287,29 @@ func FindList(key string, value int, collection *mongo.Collection) []Picture {
 Modify the différents flags
 byte : Flot JSON a list of Modification objects
 */
-func UpdateFlags(b []byte, collection *mongo.Collection) {
+func UpdateFlags(b []byte, collection *mongo.Collection) error {
 	var modifications []Modification
 	var filter, update bson.D
 	err := json.Unmarshal(b, &modifications)
-	checkError(err)
+	if err != nil {
+		return err
+	}
 
 	for _, modif := range modifications {
-		filter = bson.D{{"Id", modif.Id}}
+		filter = bson.D{{"_id", modif.Id}}
 		update = bson.D{
 			{"$set", bson.D{
 				{modif.Flag, modif.Value},
 			}},
 		}
 		updateResult, err := collection.UpdateOne(context.TODO(), filter, update)
-		checkError(err)
+		if err != nil {
+			return err
+		}
+
 		fmt.Printf("Matched %v documents and updated %v documents.\n", updateResult.MatchedCount, updateResult.ModifiedCount)
 	}
+	return nil
 }
 
 /**
@@ -306,14 +317,16 @@ Annote multiple documents.
 Set the annotated flag to true
 byte : Flot JSON a list of Annotation objects
 */
-func UpdateValue(b []byte, collection *mongo.Collection) {
+func UpdateValue(b []byte, collection *mongo.Collection) error {
 	var annotations []Annotation
 	var filter, update bson.D
 	err := json.Unmarshal(b, &annotations)
-	checkError(err)
+	if err != nil {
+		return err
+	}
 
 	for _, annot := range annotations {
-		filter = bson.D{{"Id", annot.Id}}
+		filter = bson.D{{"_id", annot.Id}}
 		update = bson.D{
 			{"$set", bson.D{
 				{"Value", annot.Value},
@@ -321,9 +334,13 @@ func UpdateValue(b []byte, collection *mongo.Collection) {
 			}},
 		}
 		updateResult, err := collection.UpdateOne(context.TODO(), filter, update)
-		checkError(err)
+		if err != nil {
+			return err
+		}
 		fmt.Printf("Matched %v documents and updated %v documents.\n", updateResult.MatchedCount, updateResult.ModifiedCount)
 	}
+
+	return nil
 }
 
 /**
