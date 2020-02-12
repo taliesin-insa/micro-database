@@ -24,15 +24,15 @@ func homeLink(w http.ResponseWriter, r *http.Request) {
 func createEntry(w http.ResponseWriter, r *http.Request) {
 	reqBody, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		w.Write([]byte(err.Error()))
 		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(err.Error()))
 		return
 	}
 
 	err = InsertMany(reqBody, Database)
 	if err != nil {
-		w.Write([]byte(err.Error()))
 		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
 		return
 	}
 
@@ -44,76 +44,64 @@ func selectById(w http.ResponseWriter, r *http.Request) {
 
 	entry, err := FindOne(entryId, Database)
 	if err != nil {
-		w.Write([]byte(err.Error()))
 		w.WriteHeader(http.StatusNotFound)
-		return
-	}
-
-	err = json.NewEncoder(w).Encode(entry)
-	if err != nil {
 		w.Write([]byte(err.Error()))
-		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
+	w.Header().Set("Content-Type", "application/json")
+	body, _ := json.Marshal(entry)
 	w.WriteHeader(http.StatusOK)
+	w.Write(body)
 }
 
 func newPage(w http.ResponseWriter, r *http.Request) {
 	entryAmnt := mux.Vars(r)["amount"]
 	amount, err := strconv.Atoi(entryAmnt)
 	if err != nil {
-		w.Write([]byte(err.Error()))
 		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(err.Error()))
 	}
 
 	entry, err := FindManyUnused(amount, Database)
 	if err != nil {
-		w.Write([]byte(err.Error()))
 		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
 		return
 	}
 
-	err = json.NewEncoder(w).Encode(entry)
-	if err != nil {
-		w.Write([]byte(err.Error()))
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
+	w.Header().Set("Content-Type", "application/json")
+	body, _ := json.Marshal(entry)
 	w.WriteHeader(http.StatusOK)
+	w.Write(body)
 }
 
 func getAll(w http.ResponseWriter, r *http.Request) {
 	entry, err := FindAll(Database)
 	if err != nil {
-		w.Write([]byte(err.Error()))
 		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
 		return
 	}
 
-	err = json.NewEncoder(w).Encode(entry)
-	if err != nil {
-		w.Write([]byte(err.Error()))
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
+	w.Header().Set("Content-Type", "application/json")
+	body, _ := json.Marshal(entry)
 	w.WriteHeader(http.StatusOK)
+	w.Write(body)
 }
 
 func updateFlags(w http.ResponseWriter, r *http.Request) {
 	reqBody, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		w.Write([]byte(err.Error()))
 		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(err.Error()))
 		return
 	}
 
 	err = UpdateFlags(reqBody, Database)
 	if err != nil {
-		w.Write([]byte(err.Error()))
 		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
 		return
 	}
 
@@ -123,15 +111,15 @@ func updateFlags(w http.ResponseWriter, r *http.Request) {
 func updateValue(w http.ResponseWriter, r *http.Request) {
 	reqBody, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		w.Write([]byte(err.Error()))
 		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(err.Error()))
 		return
 	}
 
 	err = UpdateValue(reqBody, Database)
 	if err != nil {
-		w.Write([]byte(err.Error()))
 		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(err.Error()))
 		return
 	}
 
@@ -146,7 +134,6 @@ func status(w http.ResponseWriter, r *http.Request) {
 	} else {
 		w.Write([]byte("{ 'isDBUp': true }"))
 	}
-	w.WriteHeader(http.StatusOK)
 }
 
 func deleteAll(w http.ResponseWriter, r *http.Request) {
@@ -213,7 +200,7 @@ func main() {
 	router.HandleFunc("/db/status", status).Methods("GET")
 
 	router.HandleFunc("/db/update/flags", updateFlags).Methods("PUT")
-	router.HandleFunc("/db/update/value/user", updateValue).Methods("PUT")
+	router.HandleFunc("/db/update/value", updateValue).Methods("PUT")
 
 	router.HandleFunc("/db/delete/all", deleteAll).Methods("PUT")
 

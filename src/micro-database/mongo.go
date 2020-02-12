@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/simagix/keyhole/mdb"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -47,7 +46,7 @@ type PiFFStruct struct {
 // You will be using this Trainer type later in the program
 type Picture struct {
 	// Id in db
-	_id primitive.ObjectID `bson:"_id" json:"id"`
+	Id primitive.ObjectID `bson:"_id" json:"Id"`
 	// Piff
 	PiFF PiFFStruct `json:"PiFF"`
 	// Url fileserver
@@ -60,14 +59,14 @@ type Picture struct {
 }
 
 type Modification struct {
-	Id    int    `json:"id"`
-	Flag  string `json:"flag"`
-	Value bool   `json:"value"`
+	Id    primitive.ObjectID `json:"Id"`
+	Flag  string             `json:"flag"`
+	Value bool               `json:"value"`
 }
 
 type Annotation struct {
-	Id    int    `json:"id"`
-	Value string `json:"value"`
+	Id    primitive.ObjectID `json:"Id"`
+	Value string             `json:"value"`
 }
 
 func checkError(err error) {
@@ -79,7 +78,7 @@ func checkError(err error) {
 func Connect() *mongo.Client {
 	// Set client options
 	//clientOptions := options.Client().ApplyURI("mongodb://localhost:27017")
-	URI := URI_SUR_CLUSTER
+	URI := URI_TESTS_LOCAUX
 	clientOptions := options.Client().ApplyURI(URI)
 
 	// Connect to MongoDB
@@ -135,6 +134,9 @@ byte : Flot JSON
 func InsertMany(b []byte, collection *mongo.Collection) error {
 	var pics []interface{}
 	err := json.Unmarshal(b, &pics)
+	if err != nil {
+		return err
+	}
 	insertManyResult, err := collection.InsertMany(context.TODO(), pics)
 	if err != nil {
 		return err
@@ -160,23 +162,18 @@ func FindOne(id string, collection *mongo.Collection) (Picture, error) {
 
 func FindManyUnused(amount int, collection *mongo.Collection) ([]Picture, error) {
 	// Pass these options to the Find method
-	pipeline := fmt.Sprintf(`[{
-		"$match": {
-			"Annotated": false
-			"Unreadable": false
-		}
-	},{
-		"$sample" : {
-				"size" : %v
-		}
-	}]`, amount)
+	pipeline := mongo.Pipeline{
+		{{Key: "$match", Value: bson.D{{Key: "$and", Value: bson.A{bson.D{{Key: "Annotated", Value: false}}, bson.D{{Key: "Unreadable", Value: false}}}}}}},
+		{{Key: "$sample", Value: bson.D{{Key: "size", Value: amount}}}},
+	}
+
 	opts := options.Aggregate()
 
 	// Here's an array in which you can store the decoded documents
 	var results []Picture
 
 	// Passing bson.D{{}} as the filter matches all documents in the collection
-	cur, err := collection.Aggregate(context.TODO(), mdb.MongoPipeline(pipeline), opts)
+	cur, err := collection.Aggregate(context.TODO(), pipeline, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -230,6 +227,12 @@ func FindAll(collection *mongo.Collection) ([]Picture, error) {
 		if err != nil {
 			return nil, err
 		}
+
+		var result bson.D
+		if err := cur.Decode(&result); err != nil {
+			log.Fatal(err)
+		}
+		fmt.Println(result)
 
 		results = append(results, elem)
 	}
@@ -296,7 +299,7 @@ func UpdateFlags(b []byte, collection *mongo.Collection) error {
 	}
 
 	for _, modif := range modifications {
-		filter = bson.D{{"_id", modif.Id}}
+		filter = bson.D{{"_id", primitive.ObjectID(modif.Id)}}
 		update = bson.D{
 			{"$set", bson.D{
 				{modif.Flag, modif.Value},
