@@ -24,6 +24,7 @@ func homeLink(w http.ResponseWriter, r *http.Request) {
 func createEntry(w http.ResponseWriter, r *http.Request) {
 	reqBody, err := ioutil.ReadAll(r.Body)
 	if err != nil {
+		log.Fatal(err.Error())
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(err.Error()))
 		return
@@ -31,6 +32,7 @@ func createEntry(w http.ResponseWriter, r *http.Request) {
 
 	err = InsertMany(reqBody, Database)
 	if err != nil {
+		log.Fatal(err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(err.Error()))
 		return
@@ -44,6 +46,7 @@ func selectById(w http.ResponseWriter, r *http.Request) {
 
 	entry, err := FindOne(entryId, Database)
 	if err != nil {
+		log.Fatal(err.Error())
 		w.WriteHeader(http.StatusNotFound)
 		w.Write([]byte(err.Error()))
 		return
@@ -59,12 +62,14 @@ func newPage(w http.ResponseWriter, r *http.Request) {
 	entryAmnt := mux.Vars(r)["amount"]
 	amount, err := strconv.Atoi(entryAmnt)
 	if err != nil {
+		log.Fatal(err.Error())
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(err.Error()))
 	}
 
 	entry, err := FindManyUnused(amount, Database)
 	if err != nil {
+		log.Fatal(err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(err.Error()))
 		return
@@ -79,6 +84,7 @@ func newPage(w http.ResponseWriter, r *http.Request) {
 func getAll(w http.ResponseWriter, r *http.Request) {
 	entry, err := FindAll(Database)
 	if err != nil {
+		log.Fatal(err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(err.Error()))
 		return
@@ -93,6 +99,7 @@ func getAll(w http.ResponseWriter, r *http.Request) {
 func updateFlags(w http.ResponseWriter, r *http.Request) {
 	reqBody, err := ioutil.ReadAll(r.Body)
 	if err != nil {
+		log.Fatal(err.Error())
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(err.Error()))
 		return
@@ -100,6 +107,7 @@ func updateFlags(w http.ResponseWriter, r *http.Request) {
 
 	err = UpdateFlags(reqBody, Database)
 	if err != nil {
+		log.Fatal(err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(err.Error()))
 		return
@@ -113,6 +121,7 @@ func updateValue(w http.ResponseWriter, r *http.Request) {
 
 	reqBody, err := ioutil.ReadAll(r.Body)
 	if err != nil {
+		log.Fatal(err.Error())
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(err.Error()))
 		return
@@ -121,6 +130,7 @@ func updateValue(w http.ResponseWriter, r *http.Request) {
 
 	err = UpdateValue(reqBody, Database)
 	if err != nil {
+		log.Fatal(err.Error())
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(err.Error()))
 		return
@@ -133,6 +143,7 @@ func status(w http.ResponseWriter, r *http.Request) {
 	ctx, _ := context.WithTimeout(context.Background(), 3*time.Second)
 	err := Client.Ping(ctx, readpref.Primary())
 	if err != nil {
+		log.Fatal(err.Error())
 		w.Write([]byte("{ 'isDBUp': false }"))
 	} else {
 		w.Write([]byte("{ 'isDBUp': true }"))
