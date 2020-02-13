@@ -152,7 +152,7 @@ func status(w http.ResponseWriter, r *http.Request) {
 
 func deleteAll(w http.ResponseWriter, r *http.Request) {
 	DeleteAll(Database)
-	w.WriteHeader(http.StatusNoContent)
+	w.WriteHeader(http.StatusAccepted)
 }
 
 //func getOneEvent(w http.ResponseWriter, r *http.Request) {
