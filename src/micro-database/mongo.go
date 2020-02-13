@@ -14,7 +14,7 @@ import (
 )
 
 // mongodb://[username:password@]host1[:port1][,...hostN[:portN]][/[database][?options]]
-const URI_SUR_CLUSTER = "mongodb://pinky.local:27017/" //TODO : ne marche pas encore à cause de la config
+const URI_SUR_CLUSTER = "mongodb://pinky.local:27017/"
 const URI_TESTS_LOCAUX = "mongodb://localhost:27017/"
 
 type Meta struct {
@@ -78,7 +78,7 @@ func checkError(err error) {
 func Connect() *mongo.Client {
 	// Set client options
 	//clientOptions := options.Client().ApplyURI("mongodb://localhost:27017")
-	URI := URI_TESTS_LOCAUX
+	URI := URI_SUR_CLUSTER
 	clientOptions := options.Client().ApplyURI(URI)
 
 	// Connect to MongoDB
@@ -163,12 +163,12 @@ func FindOne(id string, collection *mongo.Collection) (Picture, error) {
 func FindManyUnused(amount int, collection *mongo.Collection) ([]Picture, error) {
 	// Pass these options to the Find method
 	pipeline := mongo.Pipeline{
-		{{"$match", bson.D{{"$and",
+		bson.D{{"$match", bson.D{{"$and",
 			bson.A{
 				bson.D{{"Annotated", false}},
 				bson.D{{"Unreadable", false}},
 			}}}}},
-		{{"$sample", bson.D{{"size", amount}}}},
+		bson.D{{"$sample", bson.D{{"size", amount}}}},
 	}
 
 	opts := options.Aggregate()

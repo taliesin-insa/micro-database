@@ -39,7 +39,8 @@ type PiFFStruct struct {
 ```go
 /* Our working structure */
 type Picture struct {
-	_id primitive.ObjectID `bson:"_id" json:"_id,omitempty"`
+	// Id in db
+	Id primitive.ObjectID `bson:"_id" json:"Id"`
 	// Piff
 	PiFF PiFFStruct `json:"PiFF"`
 	// Url fileserver
@@ -50,10 +51,9 @@ type Picture struct {
 	SentToReco bool `json:"SentToReco"`
 	Unreadable bool `json:"Unreadable"`
 }
-Be careful, other people not working with the mongo module should use []byte instead of ObjectID
 
 ```
-
+Be careful, other people not working with the mongo module should use []byte instead of ObjectID
 ```go
 /* Update flags */
 type Modification struct {
@@ -69,6 +69,8 @@ type Annotation struct {
 	Value string
 }
 ```
+MongoDB is case sensitive so the fields MUST begin with a lower case
+
 In order to connect to the database, the API uses `const URI = "mongodb://mongo:27017/"` (see also the [Standard Connection String Format](#standard-connection-string-format))
 
 ## Rest API
