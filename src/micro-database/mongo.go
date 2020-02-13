@@ -332,6 +332,9 @@ func UpdateValue(b []byte, collection *mongo.Collection) error {
 		return err
 	}
 
+	fmt.Println("Value :")
+	fmt.Println(annotations)
+
 	for _, annot := range annotations {
 		filter = bson.D{{"_id", annot.Id}}
 		update = bson.D{

@@ -109,12 +109,15 @@ func updateFlags(w http.ResponseWriter, r *http.Request) {
 }
 
 func updateValue(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("Update value : ")
+
 	reqBody, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(err.Error()))
 		return
 	}
+	fmt.Println(reqBody)
 
 	err = UpdateValue(reqBody, Database)
 	if err != nil {
