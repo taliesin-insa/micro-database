@@ -163,8 +163,12 @@ func FindOne(id string, collection *mongo.Collection) (Picture, error) {
 func FindManyUnused(amount int, collection *mongo.Collection) ([]Picture, error) {
 	// Pass these options to the Find method
 	pipeline := mongo.Pipeline{
-		{{Key: "$match", Value: bson.D{{Key: "$and", Value: bson.A{bson.D{{Key: "Annotated", Value: false}}, bson.D{{Key: "Unreadable", Value: false}}}}}}},
-		{{Key: "$sample", Value: bson.D{{Key: "size", Value: amount}}}},
+		{{"$match", bson.D{{"$and",
+			bson.A{
+				bson.D{{"Annotated", false}},
+				bson.D{{"Unreadable", false}},
+			}}}}},
+		{{"$sample", bson.D{{"size", amount}}}},
 	}
 
 	opts := options.Aggregate()
