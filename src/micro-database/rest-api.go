@@ -160,13 +160,14 @@ func main() {
 
 	// Define the routing
 	router := mux.NewRouter().StrictSlash(true)
-	router.HandleFunc("/db/", homeLink)
-	router.HandleFunc("/db/insert", createEntry).Methods("POST")
+	router.HandleFunc("/db/", homeLink).Methods("GET")
 
 	router.HandleFunc("/db/select/{id}", selectById).Methods("GET")
 	router.HandleFunc("/db/retrieve/all", getAll).Methods("GET")
 	router.HandleFunc("/db/retrieve/snippets/{amount}", newPage).Methods("GET")
 	router.HandleFunc("/db/status", status).Methods("GET")
+
+	router.HandleFunc("/db/insert", createEntry).Methods("POST")
 
 	router.HandleFunc("/db/update/flags", updateFlags).Methods("PUT")
 	router.HandleFunc("/db/update/value", updateValue).Methods("PUT")
