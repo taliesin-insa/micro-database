@@ -18,23 +18,25 @@ var Client = Connect()
 var Database = Client.Database("example").Collection("trainers")
 
 func homeLink(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Welcome home!")
+	log.Printf("Homelink Joined")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("[MICRO-DATABASE] Homelink Joined"))
 }
 
 func createEntry(w http.ResponseWriter, r *http.Request) {
 	reqBody, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		log.Fatal(err.Error())
+		log.Printf("[ERROR] : %v", err.Error())
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(err.Error()))
+		w.Write([]byte(fmt.Sprintf("[MICRO-DATABASE] %v", err.Error())))
 		return
 	}
 
 	err = InsertMany(reqBody, Database)
 	if err != nil {
-		log.Fatal(err.Error())
+		log.Printf("[ERROR] : %v", err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(err.Error()))
+		w.Write([]byte(fmt.Sprintf("[MICRO-DATABASE] %v", err.Error())))
 		return
 	}
 
@@ -46,9 +48,9 @@ func selectById(w http.ResponseWriter, r *http.Request) {
 
 	entry, err := FindOne(entryId, Database)
 	if err != nil {
-		log.Fatal(err.Error())
+		log.Printf("[ERROR] : %v", err.Error())
 		w.WriteHeader(http.StatusNotFound)
-		w.Write([]byte(err.Error()))
+		w.Write([]byte(fmt.Sprintf("[MICRO-DATABASE] %v", err.Error())))
 		return
 	}
 
@@ -62,16 +64,16 @@ func newPage(w http.ResponseWriter, r *http.Request) {
 	entryAmnt := mux.Vars(r)["amount"]
 	amount, err := strconv.Atoi(entryAmnt)
 	if err != nil {
-		log.Fatal(err.Error())
+		log.Printf("[ERROR] : %v", err.Error())
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(err.Error()))
+		w.Write([]byte(fmt.Sprintf("[MICRO-DATABASE] %v", err.Error())))
 	}
 
 	entry, err := FindManyUnused(amount, Database)
 	if err != nil {
-		log.Fatal(err.Error())
+		log.Printf("[ERROR] : %v", err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(err.Error()))
+		w.Write([]byte(fmt.Sprintf("[MICRO-DATABASE] %v", err.Error())))
 		return
 	}
 
@@ -84,9 +86,9 @@ func newPage(w http.ResponseWriter, r *http.Request) {
 func getAll(w http.ResponseWriter, r *http.Request) {
 	entry, err := FindAll(Database)
 	if err != nil {
-		log.Fatal(err.Error())
+		log.Printf("[ERROR] : %v", err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(err.Error()))
+		w.Write([]byte(fmt.Sprintf("[MICRO-DATABASE] %v", err.Error())))
 		return
 	}
 
@@ -99,17 +101,17 @@ func getAll(w http.ResponseWriter, r *http.Request) {
 func updateFlags(w http.ResponseWriter, r *http.Request) {
 	reqBody, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		log.Fatal(err.Error())
+		log.Printf("[ERROR] : %v", err.Error())
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(err.Error()))
+		w.Write([]byte(fmt.Sprintf("[MICRO-DATABASE] %v", err.Error())))
 		return
 	}
 
 	err = UpdateFlags(reqBody, Database)
 	if err != nil {
-		log.Fatal(err.Error())
+		log.Printf("[ERROR] : %v", err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(err.Error()))
+		w.Write([]byte(fmt.Sprintf("[MICRO-DATABASE] %v", err.Error())))
 		return
 	}
 
@@ -121,18 +123,18 @@ func updateValue(w http.ResponseWriter, r *http.Request) {
 
 	reqBody, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		log.Fatal(err.Error())
+		log.Printf("[ERROR] : %v", err.Error())
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(err.Error()))
+		w.Write([]byte(fmt.Sprintf("[MICRO-DATABASE] %v", err.Error())))
 		return
 	}
 	fmt.Println(reqBody)
 
 	err = UpdateValue(reqBody, Database)
 	if err != nil {
-		log.Fatal(err.Error())
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(err.Error()))
+		log.Printf("[ERROR] : %v", err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(fmt.Sprintf("[MICRO-DATABASE] %v", err.Error())))
 		return
 	}
 
@@ -142,8 +144,10 @@ func updateValue(w http.ResponseWriter, r *http.Request) {
 func status(w http.ResponseWriter, r *http.Request) {
 	ctx, _ := context.WithTimeout(context.Background(), 3*time.Second)
 	err := Client.Ping(ctx, readpref.Primary())
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
 	if err != nil {
-		log.Fatal(err.Error())
+		log.Printf("[ERROR] : %v", err.Error())
 		w.Write([]byte("{ 'isDBUp': false }"))
 	} else {
 		w.Write([]byte("{ 'isDBUp': true }"))
