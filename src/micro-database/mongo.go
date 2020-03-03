@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -85,14 +84,14 @@ func Connect() *mongo.Client {
 	client, err := mongo.Connect(context.TODO(), clientOptions)
 	checkError(err)
 
-	fmt.Println("Establishing connection to mongodb on " + URI)
+	log.Printf("Establishing connection to mongodb on %v\n", URI)
 
 	// Check the connection
 	ctx, _ := context.WithTimeout(context.Background(), 2*time.Second)
 	err = client.Ping(ctx, readpref.Primary())
 	checkError(err)
 
-	fmt.Println("Connection successful!")
+	log.Printf("Connection successful!\n")
 
 	return client
 }
@@ -101,7 +100,7 @@ func Disconnect(client *mongo.Client) {
 	//Disconnection
 	err := client.Disconnect(context.TODO())
 	checkError(err)
-	fmt.Println("Connection to MongoDB closed.")
+	log.Printf("Connection to MongoDB closed.\n")
 }
 
 /**
@@ -123,7 +122,7 @@ func InsertOne(b []byte, collection *mongo.Collection) error {
 		return err
 	}
 
-	fmt.Println("Inserted a single document: ", insertResult.InsertedID)
+	log.Printf("Inserted a single document: %v\n", insertResult.InsertedID)
 	return nil
 }
 
@@ -142,7 +141,7 @@ func InsertMany(b []byte, collection *mongo.Collection) error {
 		return err
 	}
 
-	fmt.Println("Inserted multiple documents: ", insertManyResult.InsertedIDs)
+	log.Printf("Inserted multiple documents: %v\n", insertManyResult.InsertedIDs)
 	return nil
 }
 
@@ -154,7 +153,7 @@ func FindOne(id string, collection *mongo.Collection) (Picture, error) {
 	if err != nil {
 		return Picture{}, err
 	} else {
-		fmt.Printf("Found a single document: %+v\n", result)
+		log.Printf("Found a single document: %+v\n", result)
 	}
 
 	return result, nil
@@ -199,7 +198,7 @@ func FindManyUnused(amount int, collection *mongo.Collection) ([]Picture, error)
 	if err := cur.Err(); err != nil {
 		return nil, err
 	} else {
-		fmt.Printf("Found multiple documents : %+v\n", results)
+		log.Printf("Found multiple documents : %v\n", results)
 	}
 	// Close the cursor once finished
 	cur.Close(context.TODO())
@@ -234,9 +233,9 @@ func FindAll(collection *mongo.Collection) ([]Picture, error) {
 
 		var result bson.D
 		if err := cur.Decode(&result); err != nil {
-			log.Fatal(err)
+			log.Printf("%v\n", err)
 		}
-		fmt.Println(result)
+		log.Printf("%v\n", result)
 
 		results = append(results, elem)
 	}
@@ -244,7 +243,7 @@ func FindAll(collection *mongo.Collection) ([]Picture, error) {
 	if err := cur.Err(); err != nil {
 		return nil, err
 	} else {
-		fmt.Printf("Found multiple documents : %+v\n", results)
+		log.Printf("Found multiple documents : %+v\n", results)
 	}
 	// Close the cursor once finished
 	cur.Close(context.TODO())
@@ -273,16 +272,16 @@ func FindList(key string, value int, collection *mongo.Collection) []Picture {
 		var elem Picture
 		err := cur.Decode(&elem)
 		if err != nil {
-			log.Println(err)
+			log.Printf("%v\n", err)
 		}
 
 		results = append(results, elem)
 	}
 
 	if err := cur.Err(); err != nil {
-		log.Println(err)
+		log.Printf("%v\n", err)
 	} else {
-		fmt.Printf("Found multiple documents : %+v\n", results)
+		log.Printf("Found multiple documents : %+v\n", results)
 	}
 	// Close the cursor once finished
 	cur.Close(context.TODO())
@@ -314,7 +313,7 @@ func UpdateFlags(b []byte, collection *mongo.Collection) error {
 			return err
 		}
 
-		fmt.Printf("Matched %v documents and updated %v documents.\n", updateResult.MatchedCount, updateResult.ModifiedCount)
+		log.Printf("Matched %v documents and updated %v documents.\n", updateResult.MatchedCount, updateResult.ModifiedCount)
 	}
 	return nil
 }
@@ -332,8 +331,7 @@ func UpdateValue(b []byte, collection *mongo.Collection) error {
 		return err
 	}
 
-	fmt.Println("Value :")
-	fmt.Println(annotations)
+	log.Printf("Value : %v\n", annotations)
 
 	for _, annot := range annotations {
 		filter = bson.D{{"_id", annot.Id}}
@@ -347,7 +345,7 @@ func UpdateValue(b []byte, collection *mongo.Collection) error {
 		if err != nil {
 			return err
 		}
-		fmt.Printf("Matched %v documents and updated %v documents.\n", updateResult.MatchedCount, updateResult.ModifiedCount)
+		log.Printf("Matched %v documents and updated %v documents.\n", updateResult.MatchedCount, updateResult.ModifiedCount)
 	}
 
 	return nil
@@ -359,7 +357,7 @@ func UpdateValue(b []byte, collection *mongo.Collection) error {
 func DeleteAll(collection *mongo.Collection) {
 	deleteResult, err := collection.DeleteMany(context.TODO(), bson.D{{}})
 	checkError(err)
-	fmt.Printf("Deleted %v documents in the trainers collection\n", deleteResult.DeletedCount)
+	log.Printf("Deleted %v documents in the trainers collection\n", deleteResult.DeletedCount)
 }
 
 func DeleteOne(key string, value int, collection *mongo.Collection) {
@@ -367,8 +365,8 @@ func DeleteOne(key string, value int, collection *mongo.Collection) {
 
 	del, err := collection.DeleteOne(context.TODO(), filter)
 	if err != nil {
-		log.Println(err)
+		log.Printf("%v\n", err)
 	} else {
-		fmt.Printf("Deleted %+v document\n", del.DeletedCount)
+		log.Printf("Deleted %+v document\n", del.DeletedCount)
 	}
 }
