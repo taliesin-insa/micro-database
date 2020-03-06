@@ -17,6 +17,10 @@ import (
 var Client = Connect()
 var Database = Client.Database("example").Collection("trainers")
 
+type Status struct {
+	DbUp bool `fson:"isDBUp"`
+}
+
 func homeLink(w http.ResponseWriter, r *http.Request) {
 	log.Printf("Homelink Joined")
 	w.WriteHeader(http.StatusOK)
@@ -143,15 +147,19 @@ func updateValue(w http.ResponseWriter, r *http.Request) {
 
 func status(w http.ResponseWriter, r *http.Request) {
 	ctx, _ := context.WithTimeout(context.Background(), 3*time.Second)
+	res := new(Status)
 	err := Client.Ping(ctx, readpref.Primary())
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
 	if err != nil {
 		log.Printf("[ERROR] : %v", err.Error())
-		w.Write([]byte("{ 'isDBUp': false }"))
+		res.DbUp = true
 	} else {
-		w.Write([]byte("{ 'isDBUp': true }"))
+		res.DbUp = false
 	}
+
+	body, _ := json.Marshal(res)
+	w.WriteHeader(http.StatusOK)
+	w.Write(body)
+
 }
 
 //Deprecated : Not enough error management
