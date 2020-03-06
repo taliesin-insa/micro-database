@@ -379,3 +379,17 @@ func DeleteOne(key string, value int, collection *mongo.Collection) {
 		log.Printf("Deleted %+v document\n", del.DeletedCount)
 	}
 }
+
+func CountSnippets(collection *mongo.Collection) (int64, error) {
+	filter := bson.D{{}}
+	opts := options.Count()
+	res, err := collection.CountDocuments(context.TODO(), filter, opts)
+	return res, err
+}
+
+func CountFlag(collection *mongo.Collection, flag string) (int64, error) {
+	filter := bson.D{{flag, true}}
+	opts := options.Count()
+	res, err := collection.CountDocuments(context.TODO(), filter, opts)
+	return res, err
+}

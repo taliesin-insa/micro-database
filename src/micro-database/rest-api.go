@@ -18,7 +18,10 @@ var Client = Connect()
 var Database = Client.Database("example").Collection("trainers")
 
 type Status struct {
-	DbUp bool `fson:"isDBUp"`
+	DbUp       bool  `json:"isDBUp"`
+	Total      int64 `json:"total"`
+	Annotated  int64 `json:"annotated"`
+	Unreadable int64 `json:"unreadable"`
 }
 
 func homeLink(w http.ResponseWriter, r *http.Request) {
@@ -151,10 +154,38 @@ func status(w http.ResponseWriter, r *http.Request) {
 	err := Client.Ping(ctx, readpref.Primary())
 	if err != nil {
 		log.Printf("[ERROR] : %v", err.Error())
-		res.DbUp = true
+		w.Write([]byte("{ 'isDBUp': false }"))
+		return
 	} else {
-		res.DbUp = false
+		res.DbUp = true
 	}
+
+	total, err := CountSnippets(Database)
+	if err != nil {
+		log.Printf("[ERROR] : %v", err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(fmt.Sprintf("[MICRO-DATABASE] %v", err.Error())))
+		return
+	}
+	res.Total = total
+
+	annotated, err := CountFlag(Database, "Annotated")
+	if err != nil {
+		log.Printf("[ERROR] : %v", err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(fmt.Sprintf("[MICRO-DATABASE] %v", err.Error())))
+		return
+	}
+	res.Annotated = annotated
+
+	unreadable, err := CountFlag(Database, "Unreadable")
+	if err != nil {
+		log.Printf("[ERROR] : %v", err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(fmt.Sprintf("[MICRO-DATABASE] %v", err.Error())))
+		return
+	}
+	res.Unreadable = unreadable
 
 	body, _ := json.Marshal(res)
 	w.WriteHeader(http.StatusOK)
