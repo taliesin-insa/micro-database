@@ -154,9 +154,20 @@ func status(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func deleteAll(w http.ResponseWriter, r *http.Request) {
-	DeleteAll(Database)
+//Deprecated : Not enough error management
+func deleteAllIncomplete(w http.ResponseWriter, r *http.Request) {
+	DeleteAllIncomplete(Database)
 	w.WriteHeader(http.StatusAccepted)
+}
+
+func deleteAll(w http.ResponseWriter, r *http.Request) {
+	err := DeleteAll(Database)
+	if err != nil {
+		log.Printf("[ERROR] : %v", err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(fmt.Sprintf("[MICRO-DATABASE] %v", err.Error())))
+	}
+	w.WriteHeader(http.StatusOK)
 }
 
 // Actual API
@@ -176,7 +187,8 @@ func main() {
 	router.HandleFunc("/db/update/flags", updateFlags).Methods("PUT")
 	router.HandleFunc("/db/update/value", updateValue).Methods("PUT")
 
-	router.HandleFunc("/db/delete/all", deleteAll).Methods("PUT")
+	router.HandleFunc("/db/delete/all", deleteAllIncomplete).Methods("PUT")
+	router.HandleFunc("/db/delete/all", deleteAll).Methods("DELETE")
 
 	log.Fatal(http.ListenAndServe(":8080", router))
 }

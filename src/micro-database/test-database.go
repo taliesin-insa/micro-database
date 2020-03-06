@@ -67,7 +67,7 @@ func TestAll(t *testing.T) {
 
 	FindOne("1", collection)
 
-	DeleteAll(collection)
+	DeleteAllIncomplete(collection)
 
 	Disconnect(client)
 }
