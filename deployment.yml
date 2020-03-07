@@ -22,13 +22,55 @@ spec:
     spec:
       containers:
         - name: database
-          image: clyde.local:5005/taliesin/micro-database/master
+          image: clyde.local:5005/taliesin/micro-database/master:prod
           ports:
             - containerPort: 8080
           volumeMounts:
             - mountPath: "/snippets/"
               name: file-server
+          env:
+            - name: MICRO_ENVIRONMENT
+              value: "production"
       volumes:
         - name: file-server
           persistentVolumeClaim:
-            claimName: file-server-claim              
+            claimName: file-server-claim
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: database-dev
+  namespace: gitlab-managed-apps
+  labels:
+    app: database-dev
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: database-dev
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 33%
+  template:
+    metadata:
+      labels:
+        app: database-dev
+    spec:
+      containers:
+        - name: database-dev
+          image: clyde.local:5005/taliesin/micro-database/master:dev
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          volumeMounts:
+            - mountPath: "/snippets/"
+              name: file-server-dev
+          env:
+            - name: MICRO_ENVIRONMENT
+              value: "dev"
+      volumes:
+        - name: file-server-dev
+          persistentVolumeClaim:
+            claimName: file-server-dev-claim
