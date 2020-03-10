@@ -335,12 +335,10 @@ func UpdateValue(b []byte, collection *mongo.Collection) error {
 
 	for _, annot := range annotations {
 		filter = bson.D{{"_id", annot.Id}}
-		update = bson.D{
-			{"$set", bson.D{
-				{"Value", annot.Value},
-				{"Annotated", true},
-			}},
-		}
+		update = bson.D{{"$set", bson.D{
+			{"PiFF.Data.0.Value", annot.Value},
+			{"Annotated", true},
+		}}}
 		updateResult, err := collection.UpdateOne(context.TODO(), filter, update)
 		if err != nil {
 			return err
