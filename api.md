@@ -181,7 +181,14 @@ Error in the Go service : Either while unmarshalling one of the entries or the d
         ~~~
       
 ## Empty database [db/delete/all]
-### [PUT] (Will be modified to DELETE)
+### [PUT] (This endpoint will be removed in a future release)
 + Response 202 
 **More error management will be added, standard response will be modified to 200**
-
+### [DELETE]
+An error can occur during the deletion of the database
++ Response 200
++ Response 500 (text/plain)  
+    + Body 
+        ~~~
+        [MICRO-DATABASE] {Go error body}
+        ~~~
