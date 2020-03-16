@@ -9,6 +9,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 	"log"
+	"os"
 	"time"
 )
 
@@ -75,9 +76,20 @@ func checkError(err error) {
 }
 
 func Connect() *mongo.Client {
+	URI := ""
+
+	if os.Getenv("MICRO_ENVIRONMENT") == "production" {
+		URI = "mongodb://pinky.local:27017/prod"
+		log.Println("Started in production environment.")
+	} else if os.Getenv("MICRO_ENVIRONMENT") == "dev" {
+		URI = "mongodb://pinky.local:27017/isoprod"
+		log.Println("Started in dev environment.")
+	} else {
+		URI = "mongodb://localhost:27017/"
+		log.Println("Started in local environment.")
+	}
+
 	// Set client options
-	//clientOptions := options.Client().ApplyURI("mongodb://localhost:27017")
-	URI := URI_SUR_CLUSTER
 	clientOptions := options.Client().ApplyURI(URI)
 
 	// Connect to MongoDB
