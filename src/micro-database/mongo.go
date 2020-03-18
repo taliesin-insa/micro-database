@@ -13,10 +13,6 @@ import (
 	"time"
 )
 
-// mongodb://[username:password@]host1[:port1][,...hostN[:portN]][/[database][?options]]
-const URI_SUR_CLUSTER = "mongodb://pinky.local:27017/"
-const URI_TESTS_LOCAUX = "mongodb://localhost:27017/"
-
 type Meta struct {
 	Type string
 	URL  string
@@ -79,10 +75,10 @@ func Connect() *mongo.Client {
 	URI := ""
 
 	if os.Getenv("MICRO_ENVIRONMENT") == "production" {
-		URI = "mongodb://pinky.local:27017/prod"
+		URI = "mongodb://pinky.local:27017/"
 		log.Println("Started in production environment.")
 	} else if os.Getenv("MICRO_ENVIRONMENT") == "dev" {
-		URI = "mongodb://pinky.local:27017/isoprod"
+		URI = "mongodb://pinky.local:27017/"
 		log.Println("Started in dev environment.")
 	} else {
 		URI = "mongodb://localhost:27017/"
@@ -104,6 +100,16 @@ func Connect() *mongo.Client {
 	checkError(err)
 
 	log.Printf("Connection successful!\n")
+
+	if os.Getenv("MICRO_ENVIRONMENT") == "production" {
+		Database = client.Database("taliesin").Collection("prod")
+	} else if os.Getenv("MICRO_ENVIRONMENT") == "dev" {
+		Database = client.Database("taliesin").Collection("dev")
+	} else if os.Getenv("MICRO_ENVIRONMENT") == "test" {
+		Database = client.Database("taliesin").Collection("test")
+	} else {
+		Database = client.Database("taliesin").Collection("local")
+	}
 
 	return client
 }
