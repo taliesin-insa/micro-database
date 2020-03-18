@@ -7,6 +7,34 @@ import (
 	"testing"
 )
 
+var EmptyPiFF = PiFFStruct{
+	Meta: Meta{
+		Type: "line",
+		URL:  "",
+	},
+	Location: []Location{
+		{Type: "line",
+			Polygon: [][2]int{
+				{0, 0},
+				{0, 0},
+				{0, 0},
+				{0, 0},
+			},
+			Id: "loc_0",
+		},
+	},
+	Data: []Data{
+		{
+			Type:       "line",
+			LocationId: "loc_0",
+			Value:      "",
+			Id:         "0",
+		},
+	},
+	Children: nil,
+	Parent:   0,
+}
+
 func TestAll(t *testing.T) {
 	client := Connect()
 
