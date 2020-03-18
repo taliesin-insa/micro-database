@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 	"io/ioutil"
 	"log"
@@ -14,8 +15,8 @@ import (
 	"github.com/gorilla/mux"
 )
 
-var Client = Connect()
-var Database = Client.Database("example").Collection("trainers")
+var Database *mongo.Collection
+var Client = Connect(Database)
 
 func homeLink(w http.ResponseWriter, r *http.Request) {
 	log.Printf("Homelink Joined")
