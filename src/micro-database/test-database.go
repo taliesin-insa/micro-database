@@ -8,10 +8,6 @@ import (
 )
 
 func TestAll(t *testing.T) {
-	client := Connect()
-
-	//access the DB
-	collection := client.Database("example").Collection("Docs")
 
 	//create some trainers
 	p0 := PiFFStruct{
@@ -31,7 +27,7 @@ func TestAll(t *testing.T) {
 	//Test
 	fmt.Println("TEST")
 	b, _ := json.Marshal(doc0)
-	InsertOne(b, collection)
+	InsertOne(b, Database)
 
 	/*
 		//insert multiple entries
@@ -42,13 +38,13 @@ func TestAll(t *testing.T) {
 		InsertMany([]byte(doc4), collection)
 	*/
 
-	FindOne("0", collection) // WHY does name need to be in lowercase for the first one ???
+	FindOne("0", Database) // WHY does name need to be in lowercase for the first one ???
 
-	FindOne("1", collection)
+	FindOne("1", Database)
 
 	//FindMany("Id",4, collection)
 
-	DeleteOne("Id", 3, collection)
+	DeleteOne("Id", 3, Database)
 
 	//FindMany("Value", "", collection)
 
@@ -56,18 +52,18 @@ func TestAll(t *testing.T) {
 
 	modif := []byte(modification)
 
-	UpdateFlags(modif, collection)
+	UpdateFlags(modif, Database)
 
-	FindOne("2", collection)
+	FindOne("2", Database)
 
 	modification = `[{"Id": 1,"Value": "This text is annotated"}]`
 	modif = []byte(modification)
 
-	UpdateValue(modif, collection)
+	UpdateValue(modif, Database)
 
-	FindOne("1", collection)
+	FindOne("1", Database)
 
-	DeleteAllIncomplete(collection)
+	DeleteAll(Database)
 
-	Disconnect(client)
+	Disconnect(Client)
 }
