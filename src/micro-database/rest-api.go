@@ -16,7 +16,7 @@ import (
 )
 
 var Database *mongo.Collection
-var Client = Connect(Database)
+var Client = Connect()
 
 func homeLink(w http.ResponseWriter, r *http.Request) {
 	log.Printf("Homelink Joined")

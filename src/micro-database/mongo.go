@@ -71,7 +71,7 @@ func checkError(err error) {
 	}
 }
 
-func Connect(database *mongo.Collection) *mongo.Client {
+func Connect() *mongo.Client {
 	URI := ""
 
 	if os.Getenv("MICRO_ENVIRONMENT") == "production" {
@@ -102,13 +102,13 @@ func Connect(database *mongo.Collection) *mongo.Client {
 	log.Printf("Connection successful!\n")
 
 	if os.Getenv("MICRO_ENVIRONMENT") == "production" {
-		*database = *client.Database("taliesin").Collection("prod")
+		Database = client.Database("taliesin").Collection("prod")
 	} else if os.Getenv("MICRO_ENVIRONMENT") == "dev" {
-		*database = *client.Database("taliesin").Collection("dev")
+		Database = client.Database("taliesin").Collection("dev")
 	} else if os.Getenv("MICRO_ENVIRONMENT") == "test" {
-		*database = *client.Database("taliesin").Collection("test")
+		Database = client.Database("taliesin").Collection("test")
 	} else {
-		*database = *client.Database("taliesin").Collection("local")
+		Database = client.Database("taliesin").Collection("local")
 	}
 
 	return client
