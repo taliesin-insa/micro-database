@@ -110,7 +110,12 @@ docker run --name micro-database -d --link mongo:mongo micro-database
 You can test the request at `http://172.17.0.3:8080/` (I got the IPAddress by doing `docker container inspect micro-database`).
 
 ## deployment.yml
-**WIP**
+Currently two deployments are supported, the isoproduction environment (nicknamed "dev") and the production environment, they set up environment variables that the service uses to determine which database to join.  
+When you run locally on your machine, as no environment variable is set, it will join you local mongodb daemon.  
+If the need arises for a local test on the existing databases, see the documentation of your IDE to know how to set environment variables.  
+In Golang, these variables are setin the **Edit configurations** menu.
+
+In the future the number of replicas will be managed by Kubernetes, for now it is set to 3
 
 # Commits
 
