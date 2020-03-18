@@ -76,24 +76,7 @@ In order to connect to the database, the API uses `const URI = "mongodb://mongo:
 ## Rest API
 The rest API transform rest request into mongoGo API method call. 
 
-The routes are : 
-
-- **"/db/"** for home link (used for testing)
-- **"/db/insert"** to insert a JSON file (PiFF array) into the database
-- **"/db/select/{id}"** to return a PiFF with specific id
-- **"/db/retrieve/all"** to return the whole database
-- **"/db/retrieve/snippets/{amount}"** to return a certain amount of random non-annotated snippets
-- **"/db/status"** to check if the db is still reachable
-- **"/db/update/flags"** to update different flags based on a JSON file (Modification array)
-- **"/db/update/value/user"** to annotate some PiFF based on a JSON file (Annotation array)
-- **"/db/delete/all"** to clear the database
-
-### DB user
-In case we configure a proper login system for the database I add an admin user (on my own container).
-
-Admin : "taliesin"
-
-Pwd : "erwanandjulien"
+See the API documentation in API Blueprint format [here](api.md)
 
 ## Conventions
 ### Standard Connection String Format
