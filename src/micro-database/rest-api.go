@@ -18,6 +18,13 @@ import (
 var Database *mongo.Collection
 var Client = Connect()
 
+type Status struct {
+	DbUp       bool  `json:"isDBUp"`
+	Total      int64 `json:"total"`
+	Annotated  int64 `json:"annotated"`
+	Unreadable int64 `json:"unreadable"`
+}
+
 func homeLink(w http.ResponseWriter, r *http.Request) {
 	log.Printf("Homelink Joined")
 	w.WriteHeader(http.StatusOK)
@@ -120,7 +127,7 @@ func updateFlags(w http.ResponseWriter, r *http.Request) {
 }
 
 func updateValue(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Update value : ")
+	log.Println("Update value : ")
 
 	reqBody, err := ioutil.ReadAll(r.Body)
 	if err != nil {
@@ -129,7 +136,6 @@ func updateValue(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(fmt.Sprintf("[MICRO-DATABASE] %v", err.Error())))
 		return
 	}
-	fmt.Println(reqBody)
 
 	err = UpdateValue(reqBody, Database)
 	if err != nil {
@@ -144,20 +150,63 @@ func updateValue(w http.ResponseWriter, r *http.Request) {
 
 func status(w http.ResponseWriter, r *http.Request) {
 	ctx, _ := context.WithTimeout(context.Background(), 3*time.Second)
+	res := new(Status)
 	err := Client.Ping(ctx, readpref.Primary())
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
 	if err != nil {
 		log.Printf("[ERROR] : %v", err.Error())
 		w.Write([]byte("{ 'isDBUp': false }"))
+		return
 	} else {
-		w.Write([]byte("{ 'isDBUp': true }"))
+		res.DbUp = true
 	}
+
+	total, err := CountSnippets(Database)
+	if err != nil {
+		log.Printf("[ERROR] : %v", err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(fmt.Sprintf("[MICRO-DATABASE] %v", err.Error())))
+		return
+	}
+	res.Total = total
+
+	annotated, err := CountFlag(Database, "Annotated")
+	if err != nil {
+		log.Printf("[ERROR] : %v", err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(fmt.Sprintf("[MICRO-DATABASE] %v", err.Error())))
+		return
+	}
+	res.Annotated = annotated
+
+	unreadable, err := CountFlag(Database, "Unreadable")
+	if err != nil {
+		log.Printf("[ERROR] : %v", err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(fmt.Sprintf("[MICRO-DATABASE] %v", err.Error())))
+		return
+	}
+	res.Unreadable = unreadable
+
+	body, _ := json.Marshal(res)
+	w.WriteHeader(http.StatusOK)
+	w.Write(body)
+
+}
+
+//Deprecated : Not enough error management
+func deleteAllIncomplete(w http.ResponseWriter, r *http.Request) {
+	DeleteAllIncomplete(Database)
+	w.WriteHeader(http.StatusAccepted)
 }
 
 func deleteAll(w http.ResponseWriter, r *http.Request) {
-	DeleteAll(Database)
-	w.WriteHeader(http.StatusAccepted)
+	err := DeleteAll(Database)
+	if err != nil {
+		log.Printf("[ERROR] : %v", err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(fmt.Sprintf("[MICRO-DATABASE] %v", err.Error())))
+	}
+	w.WriteHeader(http.StatusOK)
 }
 
 // Actual API
@@ -177,7 +226,8 @@ func main() {
 	router.HandleFunc("/db/update/flags", updateFlags).Methods("PUT")
 	router.HandleFunc("/db/update/value", updateValue).Methods("PUT")
 
-	router.HandleFunc("/db/delete/all", deleteAll).Methods("PUT")
+	router.HandleFunc("/db/delete/all", deleteAllIncomplete).Methods("PUT")
+	router.HandleFunc("/db/delete/all", deleteAll).Methods("DELETE")
 
 	log.Fatal(http.ListenAndServe(":8080", router))
 }

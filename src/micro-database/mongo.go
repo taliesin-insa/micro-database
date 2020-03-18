@@ -353,12 +353,10 @@ func UpdateValue(b []byte, collection *mongo.Collection) error {
 
 	for _, annot := range annotations {
 		filter = bson.D{{"_id", annot.Id}}
-		update = bson.D{
-			{"$set", bson.D{
-				{"Value", annot.Value},
-				{"Annotated", true},
-			}},
-		}
+		update = bson.D{{"$set", bson.D{
+			{"PiFF.Data.0.Value", annot.Value},
+			{"Annotated", true},
+		}}}
 		updateResult, err := collection.UpdateOne(context.TODO(), filter, update)
 		if err != nil {
 			return err
@@ -372,10 +370,19 @@ func UpdateValue(b []byte, collection *mongo.Collection) error {
 /**
   Flush the database
 */
-func DeleteAll(collection *mongo.Collection) {
+func DeleteAllIncomplete(collection *mongo.Collection) {
 	deleteResult, err := collection.DeleteMany(context.TODO(), bson.D{{}})
 	checkError(err)
 	log.Printf("Deleted %v documents in the trainers collection\n", deleteResult.DeletedCount)
+}
+
+func DeleteAll(collection *mongo.Collection) error {
+	deleteResult, err := collection.DeleteMany(context.TODO(), bson.D{{}})
+	if err != nil {
+		return err
+	}
+	log.Printf("Deleted %v documents in the trainers collection\n", deleteResult.DeletedCount)
+	return nil
 }
 
 func DeleteOne(key string, value int, collection *mongo.Collection) {
@@ -387,4 +394,18 @@ func DeleteOne(key string, value int, collection *mongo.Collection) {
 	} else {
 		log.Printf("Deleted %+v document\n", del.DeletedCount)
 	}
+}
+
+func CountSnippets(collection *mongo.Collection) (int64, error) {
+	filter := bson.D{{}}
+	opts := options.Count()
+	res, err := collection.CountDocuments(context.TODO(), filter, opts)
+	return res, err
+}
+
+func CountFlag(collection *mongo.Collection, flag string) (int64, error) {
+	filter := bson.D{{flag, true}}
+	opts := options.Count()
+	res, err := collection.CountDocuments(context.TODO(), filter, opts)
+	return res, err
 }
