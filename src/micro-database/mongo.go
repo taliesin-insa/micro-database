@@ -150,19 +150,19 @@ func InsertOne(b []byte, collection *mongo.Collection) error {
 From a json flow, insert multiple entries in the database
 byte : Flot JSON
 */
-func InsertMany(b []byte, collection *mongo.Collection) error {
+func InsertMany(b []byte, collection *mongo.Collection) ([]interface{}, error) {
 	var pics []interface{}
 	err := json.Unmarshal(b, &pics)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	insertManyResult, err := collection.InsertMany(context.TODO(), pics)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	log.Printf("Inserted multiple documents: %v\n", insertManyResult.InsertedIDs)
-	return nil
+	return insertManyResult.InsertedIDs, nil
 }
 
 func FindOne(id string, collection *mongo.Collection) (Picture, error) {

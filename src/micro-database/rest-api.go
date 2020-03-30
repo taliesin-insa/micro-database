@@ -40,7 +40,15 @@ func createEntry(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = InsertMany(reqBody, Database)
+	ids, err := InsertMany(reqBody, Database)
+	if err != nil {
+		log.Printf("[ERROR] : %v", err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(fmt.Sprintf("[MICRO-DATABASE] %v", err.Error())))
+		return
+	}
+
+	body, err := json.Marshal(ids)
 	if err != nil {
 		log.Printf("[ERROR] : %v", err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
@@ -49,6 +57,7 @@ func createEntry(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusCreated)
+	w.Write(body)
 }
 
 func selectById(w http.ResponseWriter, r *http.Request) {
