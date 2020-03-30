@@ -352,6 +352,32 @@ Error in the Go service : Either while unmarshalling one of the entries or the d
         ~~~
         [MICRO-DATABASE] {Go error body}
         ~~~
+
+## Add an annotation specifying the annotator [db/update/value/{annotator}]
++ Parameters
+    + annotator (string) : Annotator Identifier 
+### [PUT]
++ Request (application/json)
+    + Body
+        ~~~
+        [{"Id":"5e679a2c005e59a282790a76","Value":"Premiere annotation"},{"Id":"5e679a2c005e59a282790a98","Value":"Deuxième annotation"}]
+        ~~~
+       
++ Response 204
+
++ Response 400 (text/plain)  
+Error while reading body entry.
+    + Body
+        ~~~
+        [MICRO-DATABASE] {Go error body}
+        ~~~
+
++ Response 500 (text/plain)  
+Error in the Go service : Either while unmarshalling one of the entries or the database update.
+    + Body 
+        ~~~
+        [MICRO-DATABASE] {Go error body}
+        ~~~
       
 ## Empty database [db/delete/all]
 ### [PUT] (This endpoint will be removed in a future release)
