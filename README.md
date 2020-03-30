@@ -43,13 +43,15 @@ type Picture struct {
 	Id primitive.ObjectID `bson:"_id" json:"Id"`
 	// Piff
 	PiFF PiFFStruct `json:"PiFF"`
-	// Url fileserver
-	Url string `json:"Url"`
+	Url string `json:"Url"` //The URL on our fileserver
+	Filename string `json:"Filename"` //The original name of the file
 	// Flags
 	Annotated  bool `json:"Annotated"`
 	Corrected  bool `json:"Corrected"`
 	SentToReco bool `json:"SentToReco"`
 	Unreadable bool `json:"Unreadable"`
+	//
+	Annotator string `json:"Annotator"`
 }
 
 ```
