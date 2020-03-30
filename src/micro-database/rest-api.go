@@ -40,7 +40,15 @@ func createEntry(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = InsertMany(reqBody, Database)
+	ids, err := InsertMany(reqBody, Database)
+	if err != nil {
+		log.Printf("[ERROR] : %v", err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(fmt.Sprintf("[MICRO-DATABASE] %v", err.Error())))
+		return
+	}
+
+	body, err := json.Marshal(ids)
 	if err != nil {
 		log.Printf("[ERROR] : %v", err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
@@ -49,6 +57,7 @@ func createEntry(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusCreated)
+	w.Write(body)
 }
 
 func selectById(w http.ResponseWriter, r *http.Request) {
@@ -78,6 +87,29 @@ func newPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	entry, err := FindManyUnused(amount, Database)
+	if err != nil {
+		log.Printf("[ERROR] : %v", err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(fmt.Sprintf("[MICRO-DATABASE] %v", err.Error())))
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	body, _ := json.Marshal(entry)
+	w.WriteHeader(http.StatusOK)
+	w.Write(body)
+}
+
+func newBatchForReco(w http.ResponseWriter, r *http.Request) {
+	entryAmnt := mux.Vars(r)["amount"]
+	amount, err := strconv.Atoi(entryAmnt)
+	if err != nil {
+		log.Printf("[ERROR] : %v", err.Error())
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(fmt.Sprintf("[MICRO-DATABASE] %v", err.Error())))
+	}
+
+	entry, err := FindManyForSuggestion(amount, Database)
 	if err != nil {
 		log.Printf("[ERROR] : %v", err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
@@ -138,6 +170,29 @@ func updateValue(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = UpdateValue(reqBody, Database)
+	if err != nil {
+		log.Printf("[ERROR] : %v", err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(fmt.Sprintf("[MICRO-DATABASE] %v", err.Error())))
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func updateValueWithAnnotator(w http.ResponseWriter, r *http.Request) {
+	annotator := mux.Vars(r)["annotator"]
+	log.Println("Update value : ")
+
+	reqBody, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		log.Printf("[ERROR] : %v", err.Error())
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(fmt.Sprintf("[MICRO-DATABASE] %v", err.Error())))
+		return
+	}
+
+	err = UpdateValueWithAnnotator(reqBody, Database, annotator)
 	if err != nil {
 		log.Printf("[ERROR] : %v", err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
@@ -219,12 +274,14 @@ func main() {
 	router.HandleFunc("/db/select/{id}", selectById).Methods("GET")
 	router.HandleFunc("/db/retrieve/all", getAll).Methods("GET")
 	router.HandleFunc("/db/retrieve/snippets/{amount}", newPage).Methods("GET")
+	router.HandleFunc("/db/retrieve/recognizer/{amount}", newBatchForReco).Methods("GET")
 	router.HandleFunc("/db/status", status).Methods("GET")
 
 	router.HandleFunc("/db/insert", createEntry).Methods("POST")
 
 	router.HandleFunc("/db/update/flags", updateFlags).Methods("PUT")
 	router.HandleFunc("/db/update/value", updateValue).Methods("PUT")
+	router.HandleFunc("/db/update/value/{annotator}", updateValueWithAnnotator).Methods("PUT")
 
 	router.HandleFunc("/db/delete/all", deleteAllIncomplete).Methods("PUT")
 	router.HandleFunc("/db/delete/all", deleteAll).Methods("DELETE")
