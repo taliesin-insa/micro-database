@@ -108,14 +108,187 @@ Pings the MongoDB database and sends the result as a boolean.
 ### [POST]
 + Request (application/json)
     + Body
-        ~~~TODO
-        I'll write the example body when the microservices will be running again
+        ~~~
+      [
+          {
+              "PiFF": {
+                  "Meta": {
+                      "Type": "line",
+                      "URL": ""
+                  },
+                  "Location": [
+                      {
+                          "Type": "line",
+                          "Polygon": [
+                              [
+                                  0,
+                                  0
+                              ],
+                              [
+                                  1080,
+                                  0
+                              ],
+                              [
+                                  1080,
+                                  1920
+                              ],
+                              [
+                                  0,
+                                  1920
+                              ]
+                          ],
+                          "Id": "loc_0"
+                      }
+                  ],
+                  "Data": [
+                      {
+                          "Type": "line",
+                          "LocationId": "loc_0",
+                          "Value": "",
+                          "Id": "0"
+                      }
+                  ],
+                  "Children": null,
+                  "Parent": 0
+              },
+              "Url": "/snippets/wp1951689.jpg"
+          },
+          {
+              "PiFF": {
+                  "Meta": {
+                      "Type": "line",
+                      "URL": ""
+                  },
+                  "Location": [
+                      {
+                          "Type": "line",
+                          "Polygon": [
+                              [
+                                  0,
+                                  0
+                              ],
+                              [
+                                  667,
+                                  0
+                              ],
+                              [
+                                  667,
+                                  1000
+                              ],
+                              [
+                                  0,
+                                  1000
+                              ]
+                          ],
+                          "Id": "loc_0"
+                      }
+                  ],
+                  "Data": [
+                      {
+                          "Type": "line",
+                          "LocationId": "loc_0",
+                          "Value": "",
+                          "Id": "0"
+                      }
+                  ],
+                  "Children": null,
+                  "Parent": 0
+              },
+              "Url": "/snippets/photo-1444703686981-a3abbc4d4fe3.jpg"
+          },
+          {
+              "PiFF": {
+                  "Meta": {
+                      "Type": "line",
+                      "URL": ""
+                  },
+                  "Location": [
+                      {
+                          "Type": "line",
+                          "Polygon": [
+                              [
+                                  0,
+                                  0
+                              ],
+                              [
+                                  1080,
+                                  0
+                              ],
+                              [
+                                  1080,
+                                  1920
+                              ],
+                              [
+                                  0,
+                                  1920
+                              ]
+                          ],
+                          "Id": "loc_0"
+                      }
+                  ],
+                  "Data": [
+                      {
+                          "Type": "line",
+                          "LocationId": "loc_0",
+                          "Value": "",
+                          "Id": "0"
+                      }
+                  ],
+                  "Children": null,
+                  "Parent": 0
+              },
+              "Url": "/snippets/The-art-of-sales-through-story-telling.jpg"
+          },
+          {
+              "PiFF": {
+                  "Meta": {
+                      "Type": "line",
+                      "URL": ""
+                  },
+                  "Location": [
+                      {
+                          "Type": "line",
+                          "Polygon": [
+                              [
+                                  0,
+                                  0
+                              ],
+                              [
+                                  1080,
+                                  0
+                              ],
+                              [
+                                  1080,
+                                  1920
+                              ],
+                              [
+                                  0,
+                                  1920
+                              ]
+                          ],
+                          "Id": "loc_0"
+                      }
+                  ],
+                  "Data": [
+                      {
+                          "Type": "line",
+                          "LocationId": "loc_0",
+                          "Value": "",
+                          "Id": "0"
+                      }
+                  ],
+                  "Children": null,
+                  "Parent": 0
+              },
+              "Url": "/snippets/wallpaper-1698879.jpg"
+          }
+      ]
         ~~~
        
 + Response 201 (text/plain)
     + Body
-        ~~~TODO
-        I'll write the example body when the microservices will be running again
+        ~~~
+        ["5e81db20c096cc792fff5094","5e81db20c096cc792fff5095","5e81db20c096cc792fff5096","5e81db20c096cc792fff5097"]
         ~~~
 
 + Response 400 (text/plain)  
