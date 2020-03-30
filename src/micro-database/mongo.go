@@ -226,6 +226,65 @@ func FindManyUnused(amount int, collection *mongo.Collection) ([]Picture, error)
 	return results, nil
 }
 
+func FindManyForSuggestion(amount int, collection *mongo.Collection) ([]Picture, error) {
+	// Pass these options to the Find method
+	pipeline := mongo.Pipeline{
+		bson.D{{"$match", bson.D{{"$and",
+			bson.A{
+				bson.D{{"Annotated", false}},
+				bson.D{{"Unreadable", false}},
+				bson.D{{"SentToReco", false}},
+			}}}}},
+		bson.D{{"$sample", bson.D{{"size", amount}}}},
+	}
+
+	opts := options.Aggregate()
+
+	// Here's an array in which you can store the decoded documents
+	var results []Picture
+
+	// Passing bson.D{{}} as the filter matches all documents in the collection
+	cur, err := collection.Aggregate(context.TODO(), pipeline, opts)
+	if err != nil {
+		return nil, err
+	}
+
+	// Finding multiple documents returns a cursor
+	// Iterating through the cursor allows us to decode documents one at a time
+	for cur.Next(context.TODO()) {
+
+		// create a value into which the single document can be decoded
+		var elem Picture
+		err := cur.Decode(&elem)
+		if err != nil {
+			return nil, err
+		}
+
+		filter := bson.D{{"_id", elem.Id}}
+		update := bson.D{
+			{"$set", bson.D{
+				{"SentToReco", true},
+			}},
+		}
+		_, err = collection.UpdateOne(context.TODO(), filter, update)
+		if err != nil {
+			return nil, err
+		}
+
+		results = append(results, elem)
+	}
+
+	if err := cur.Err(); err != nil {
+		return nil, err
+	} else {
+		log.Printf("Found multiple documents : %v\n", results)
+	}
+	// Close the cursor once finished
+	cur.Close(context.TODO())
+
+	return results, nil
+}
+
 func FindAll(collection *mongo.Collection) ([]Picture, error) {
 	// Pass these options to the Find method
 	findOptions := options.Find()
