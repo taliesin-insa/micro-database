@@ -157,6 +157,29 @@ func updateValue(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
+func updateValueWithAnnotator(w http.ResponseWriter, r *http.Request) {
+	annotator := mux.Vars(r)["annotator"]
+	log.Println("Update value : ")
+
+	reqBody, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		log.Printf("[ERROR] : %v", err.Error())
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(fmt.Sprintf("[MICRO-DATABASE] %v", err.Error())))
+		return
+	}
+
+	err = UpdateValueWithAnnotator(reqBody, Database, annotator)
+	if err != nil {
+		log.Printf("[ERROR] : %v", err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(fmt.Sprintf("[MICRO-DATABASE] %v", err.Error())))
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
 func status(w http.ResponseWriter, r *http.Request) {
 	ctx, _ := context.WithTimeout(context.Background(), 3*time.Second)
 	res := new(Status)
@@ -234,6 +257,7 @@ func main() {
 
 	router.HandleFunc("/db/update/flags", updateFlags).Methods("PUT")
 	router.HandleFunc("/db/update/value", updateValue).Methods("PUT")
+	router.HandleFunc("/db/update/value/{annotator}", updateValueWithAnnotator).Methods("PUT")
 
 	router.HandleFunc("/db/delete/all", deleteAllIncomplete).Methods("PUT")
 	router.HandleFunc("/db/delete/all", deleteAll).Methods("DELETE")
