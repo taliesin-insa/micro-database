@@ -105,8 +105,6 @@ func Connect() *mongo.Client {
 		Database = client.Database("taliesin").Collection("prod")
 	} else if os.Getenv("MICRO_ENVIRONMENT") == "dev" {
 		Database = client.Database("taliesin").Collection("dev")
-	} else if os.Getenv("MICRO_ENVIRONMENT") == "test" {
-		Database = client.Database("taliesin").Collection("test")
 	} else {
 		Database = client.Database("taliesin").Collection("local")
 	}
@@ -119,29 +117,6 @@ func Disconnect(client *mongo.Client) {
 	err := client.Disconnect(context.TODO())
 	checkError(err)
 	log.Printf("Connection to MongoDB closed.\n")
-}
-
-/**
-From a json flow, insert one entry in the database -> Useless
-*/
-func InsertOne(b []byte, collection *mongo.Collection) error {
-	var pic Picture
-	var piff PiFFStruct
-
-	err := json.Unmarshal(b, &piff)
-	if err != nil {
-		return err
-	}
-
-	pic.PiFF = piff
-
-	insertResult, err := collection.InsertOne(context.TODO(), pic)
-	if err != nil {
-		return err
-	}
-
-	log.Printf("Inserted a single document: %v\n", insertResult.InsertedID)
-	return nil
 }
 
 /**

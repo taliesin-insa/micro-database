@@ -2,8 +2,10 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
+	"github.com/stretchr/testify/assert"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"log"
+	"os"
 	"testing"
 )
 
@@ -35,9 +37,25 @@ var EmptyPiFF = PiFFStruct{
 	Parent:   0,
 }
 
-func TestAll(t *testing.T) {
+func TestMain(m *testing.M) {
+	setup()
+	code := m.Run()
+	shutdown()
+	os.Exit(code)
+}
 
-	//create some trainers
+func setup() {
+	os.Setenv("MICRO_ENVIRONMENT", "test")
+	Database = Client.Database("taliesin").Collection("test")
+	log.Println("Started Tests")
+}
+
+func shutdown() {
+	Disconnect(Client)
+	log.Println("Ended Tests")
+}
+
+func TestInsert(t *testing.T) {
 	p0 := PiFFStruct{
 		Meta:     Meta{},
 		Location: nil,
@@ -45,7 +63,54 @@ func TestAll(t *testing.T) {
 		Children: nil,
 		Parent:   0,
 	}
-	doc0 := Picture{*new(primitive.ObjectID), p0, "", false, false, false, false}
+	doc0 := Picture{nil, p0, "/temp/none0", false, false, false, false}
+
+	p1 := PiFFStruct{
+		Meta:     Meta{},
+		Location: nil,
+		Data:     nil,
+		Children: nil,
+		Parent:   0,
+	}
+	doc1 := Picture{nil, p1, "/temp/none1", false, false, false, false}
+
+	tab := [2]Picture{doc0, doc1}
+
+	b, _ := json.Marshal(tab)
+	err := InsertMany(b, Database)
+	checkError(err)
+}
+
+func TestFindFail(t *testing.T) {
+	pic, err := FindOne("0", Database)
+	checkError(err)
+	assert.Nil(t, pic)
+}
+
+func TestFind(t *testing.T) {
+	p0 := PiFFStruct{
+		Meta:     Meta{},
+		Location: nil,
+		Data:     nil,
+		Children: nil,
+		Parent:   0,
+	}
+	id := new(primitive.ObjectID)
+
+	doc0 := Picture{*id, p0, "/temp/none0", false, false, false, false}
+
+	tab := [1]Picture{doc0}
+	b, _ := json.Marshal(tab)
+	_ = InsertMany(b, Database)
+
+	pic, err := FindOne(id.String(), Database)
+	checkError(err)
+
+	assert.Equal(t, doc0, pic)
+
+}
+
+func TestAll(t *testing.T) {
 
 	//doc1 := Picture{1, "","","","","","",false,false,false,false, false}
 	//doc2 := Picture{2, "","","","","","",false,false,false,false, false}
@@ -53,9 +118,6 @@ func TestAll(t *testing.T) {
 	//doc4 := `[{"Id": 4, "Type": "", "Value": "", "Children": "", "Parent": "", "Url" : "", "Annotated":false}]`	//JSON with holes
 
 	//Test
-	fmt.Println("TEST")
-	b, _ := json.Marshal(doc0)
-	InsertOne(b, Database)
 
 	/*
 		//insert multiple entries
