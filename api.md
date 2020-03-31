@@ -108,14 +108,187 @@ Pings the MongoDB database and sends the result as a boolean.
 ### [POST]
 + Request (application/json)
     + Body
-        ~~~TODO
-        I'll write the example body when the microservices will be running again
+        ~~~
+      [
+          {
+              "PiFF": {
+                  "Meta": {
+                      "Type": "line",
+                      "URL": ""
+                  },
+                  "Location": [
+                      {
+                          "Type": "line",
+                          "Polygon": [
+                              [
+                                  0,
+                                  0
+                              ],
+                              [
+                                  1080,
+                                  0
+                              ],
+                              [
+                                  1080,
+                                  1920
+                              ],
+                              [
+                                  0,
+                                  1920
+                              ]
+                          ],
+                          "Id": "loc_0"
+                      }
+                  ],
+                  "Data": [
+                      {
+                          "Type": "line",
+                          "LocationId": "loc_0",
+                          "Value": "",
+                          "Id": "0"
+                      }
+                  ],
+                  "Children": null,
+                  "Parent": 0
+              },
+              "Url": "/snippets/wp1951689.jpg"
+          },
+          {
+              "PiFF": {
+                  "Meta": {
+                      "Type": "line",
+                      "URL": ""
+                  },
+                  "Location": [
+                      {
+                          "Type": "line",
+                          "Polygon": [
+                              [
+                                  0,
+                                  0
+                              ],
+                              [
+                                  667,
+                                  0
+                              ],
+                              [
+                                  667,
+                                  1000
+                              ],
+                              [
+                                  0,
+                                  1000
+                              ]
+                          ],
+                          "Id": "loc_0"
+                      }
+                  ],
+                  "Data": [
+                      {
+                          "Type": "line",
+                          "LocationId": "loc_0",
+                          "Value": "",
+                          "Id": "0"
+                      }
+                  ],
+                  "Children": null,
+                  "Parent": 0
+              },
+              "Url": "/snippets/photo-1444703686981-a3abbc4d4fe3.jpg"
+          },
+          {
+              "PiFF": {
+                  "Meta": {
+                      "Type": "line",
+                      "URL": ""
+                  },
+                  "Location": [
+                      {
+                          "Type": "line",
+                          "Polygon": [
+                              [
+                                  0,
+                                  0
+                              ],
+                              [
+                                  1080,
+                                  0
+                              ],
+                              [
+                                  1080,
+                                  1920
+                              ],
+                              [
+                                  0,
+                                  1920
+                              ]
+                          ],
+                          "Id": "loc_0"
+                      }
+                  ],
+                  "Data": [
+                      {
+                          "Type": "line",
+                          "LocationId": "loc_0",
+                          "Value": "",
+                          "Id": "0"
+                      }
+                  ],
+                  "Children": null,
+                  "Parent": 0
+              },
+              "Url": "/snippets/The-art-of-sales-through-story-telling.jpg"
+          },
+          {
+              "PiFF": {
+                  "Meta": {
+                      "Type": "line",
+                      "URL": ""
+                  },
+                  "Location": [
+                      {
+                          "Type": "line",
+                          "Polygon": [
+                              [
+                                  0,
+                                  0
+                              ],
+                              [
+                                  1080,
+                                  0
+                              ],
+                              [
+                                  1080,
+                                  1920
+                              ],
+                              [
+                                  0,
+                                  1920
+                              ]
+                          ],
+                          "Id": "loc_0"
+                      }
+                  ],
+                  "Data": [
+                      {
+                          "Type": "line",
+                          "LocationId": "loc_0",
+                          "Value": "",
+                          "Id": "0"
+                      }
+                  ],
+                  "Children": null,
+                  "Parent": 0
+              },
+              "Url": "/snippets/wallpaper-1698879.jpg"
+          }
+      ]
         ~~~
        
 + Response 201 (text/plain)
     + Body
-        ~~~TODO
-        I'll write the example body when the microservices will be running again
+        ~~~
+        ["5e81db20c096cc792fff5094","5e81db20c096cc792fff5095","5e81db20c096cc792fff5096","5e81db20c096cc792fff5097"]
         ~~~
 
 + Response 400 (text/plain)  
@@ -162,6 +335,32 @@ Error in the Go service : Either while unmarshalling one of the entries or the d
     + Body
         ~~~TODO
         I'll write the example body when the microservices will be running again
+        ~~~
+       
++ Response 204
+
++ Response 400 (text/plain)  
+Error while reading body entry.
+    + Body
+        ~~~
+        [MICRO-DATABASE] {Go error body}
+        ~~~
+
++ Response 500 (text/plain)  
+Error in the Go service : Either while unmarshalling one of the entries or the database update.
+    + Body 
+        ~~~
+        [MICRO-DATABASE] {Go error body}
+        ~~~
+
+## Add an annotation specifying the annotator [db/update/value/{annotator}]
++ Parameters
+    + annotator (string) : Annotator Identifier 
+### [PUT]
++ Request (application/json)
+    + Body
+        ~~~
+        [{"Id":"5e679a2c005e59a282790a76","Value":"Premiere annotation"},{"Id":"5e679a2c005e59a282790a98","Value":"Deuxième annotation"}]
         ~~~
        
 + Response 204

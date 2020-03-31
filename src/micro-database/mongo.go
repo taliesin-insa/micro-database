@@ -44,14 +44,16 @@ type Picture struct {
 	// Id in db
 	Id primitive.ObjectID `bson:"_id" json:"Id"`
 	// Piff
-	PiFF PiFFStruct `json:"PiFF"`
-	// Url fileserver
-	Url string `json:"Url"`
+	PiFF     PiFFStruct `json:"PiFF"`
+	Url      string     `json:"Url"`      //The URL on our fileserver
+	Filename string     `json:"Filename"` //The original name of the file
 	// Flags
 	Annotated  bool `json:"Annotated"`
 	Corrected  bool `json:"Corrected"`
 	SentToReco bool `json:"SentToReco"`
 	Unreadable bool `json:"Unreadable"`
+	//
+	Annotator string `json:"Annotator"`
 }
 
 type Modification struct {
@@ -123,19 +125,19 @@ func Disconnect(client *mongo.Client) {
 From a json flow, insert multiple entries in the database
 byte : Flot JSON
 */
-func InsertMany(b []byte, collection *mongo.Collection) error {
+func InsertMany(b []byte, collection *mongo.Collection) ([]interface{}, error) {
 	var pics []interface{}
 	err := json.Unmarshal(b, &pics)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	insertManyResult, err := collection.InsertMany(context.TODO(), pics)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	log.Printf("Inserted multiple documents: %v\n", insertManyResult.InsertedIDs)
-	return nil
+	return insertManyResult.InsertedIDs, nil
 }
 
 func FindOne(id string, collection *mongo.Collection) (Picture, error) {
@@ -181,6 +183,65 @@ func FindManyUnused(amount int, collection *mongo.Collection) ([]Picture, error)
 		// create a value into which the single document can be decoded
 		var elem Picture
 		err := cur.Decode(&elem)
+		if err != nil {
+			return nil, err
+		}
+
+		results = append(results, elem)
+	}
+
+	if err := cur.Err(); err != nil {
+		return nil, err
+	} else {
+		log.Printf("Found multiple documents : %v\n", results)
+	}
+	// Close the cursor once finished
+	cur.Close(context.TODO())
+
+	return results, nil
+}
+
+func FindManyForSuggestion(amount int, collection *mongo.Collection) ([]Picture, error) {
+	// Pass these options to the Find method
+	pipeline := mongo.Pipeline{
+		bson.D{{"$match", bson.D{{"$and",
+			bson.A{
+				bson.D{{"Annotated", false}},
+				bson.D{{"Unreadable", false}},
+				bson.D{{"SentToReco", false}},
+			}}}}},
+		bson.D{{"$sample", bson.D{{"size", amount}}}},
+	}
+
+	opts := options.Aggregate()
+
+	// Here's an array in which you can store the decoded documents
+	var results []Picture
+
+	// Passing bson.D{{}} as the filter matches all documents in the collection
+	cur, err := collection.Aggregate(context.TODO(), pipeline, opts)
+	if err != nil {
+		return nil, err
+	}
+
+	// Finding multiple documents returns a cursor
+	// Iterating through the cursor allows us to decode documents one at a time
+	for cur.Next(context.TODO()) {
+
+		// create a value into which the single document can be decoded
+		var elem Picture
+		err := cur.Decode(&elem)
+		if err != nil {
+			return nil, err
+		}
+
+		filter := bson.D{{"_id", elem.Id}}
+		update := bson.D{
+			{"$set", bson.D{
+				{"SentToReco", true},
+			}},
+		}
+		_, err = collection.UpdateOne(context.TODO(), filter, update)
 		if err != nil {
 			return nil, err
 		}
@@ -331,6 +392,34 @@ func UpdateValue(b []byte, collection *mongo.Collection) error {
 		update = bson.D{{"$set", bson.D{
 			{"PiFF.Data.0.Value", annot.Value},
 			{"Annotated", true},
+			{"Annotator", "unspecified"},
+		}}}
+		updateResult, err := collection.UpdateOne(context.TODO(), filter, update)
+		if err != nil {
+			return err
+		}
+		log.Printf("Matched %v documents and updated %v documents.\n", updateResult.MatchedCount, updateResult.ModifiedCount)
+	}
+
+	return nil
+}
+
+func UpdateValueWithAnnotator(b []byte, collection *mongo.Collection, annotator string) error {
+	var annotations []Annotation
+	var filter, update bson.D
+	err := json.Unmarshal(b, &annotations)
+	if err != nil {
+		return err
+	}
+
+	log.Printf("Value : %v\n", annotations)
+
+	for _, annot := range annotations {
+		filter = bson.D{{"_id", annot.Id}}
+		update = bson.D{{"$set", bson.D{
+			{"PiFF.Data.0.Value", annot.Value},
+			{"Annotated", true},
+			{"Annotator", annotator},
 		}}}
 		updateResult, err := collection.UpdateOne(context.TODO(), filter, update)
 		if err != nil {
