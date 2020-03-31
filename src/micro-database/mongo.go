@@ -10,6 +10,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 	"log"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -162,6 +163,21 @@ func InsertMany(b []byte, collection *mongo.Collection) ([]interface{}, error) {
 	}
 
 	log.Printf("Inserted multiple documents: %v\n", insertManyResult.InsertedIDs)
+
+	for _, id := range insertManyResult.InsertedIDs {
+		newUrl := "/snippets/" + strings.TrimSuffix(strings.TrimPrefix(id.(primitive.ObjectID).String(), "ObjectID(\""), "\")")
+		filter := bson.D{{"_id", id}}
+		update := bson.D{
+			{"$set", bson.D{
+				{"Url", newUrl},
+			}},
+		}
+		_, err = collection.UpdateOne(context.TODO(), filter, update)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	return insertManyResult.InsertedIDs, nil
 }
 
