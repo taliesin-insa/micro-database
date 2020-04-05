@@ -176,7 +176,7 @@ func updateValue(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = UpdateValue(reqBody, Database)
+	err = UpdateValueWithAnnotator(reqBody, Database, "unspecified")
 	if err != nil {
 		log.Printf("[ERROR] : %v", err.Error())
 		w.WriteHeader(http.StatusInternalServerError)

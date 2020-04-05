@@ -377,33 +377,6 @@ Annote multiple documents.
 Set the annotated flag to true
 byte : Flot JSON a list of Annotation objects
 */
-func UpdateValue(b []byte, collection *mongo.Collection) error {
-	var annotations []Annotation
-	var filter, update bson.D
-	err := json.Unmarshal(b, &annotations)
-	if err != nil {
-		return err
-	}
-
-	log.Printf("Value : %v\n", annotations)
-
-	for _, annot := range annotations {
-		filter = bson.D{{"_id", annot.Id}}
-		update = bson.D{{"$set", bson.D{
-			{"PiFF.Data.0.Value", annot.Value},
-			{"Annotated", true},
-			{"Annotator", "unspecified"},
-		}}}
-		updateResult, err := collection.UpdateOne(context.TODO(), filter, update)
-		if err != nil {
-			return err
-		}
-		log.Printf("Matched %v documents and updated %v documents.\n", updateResult.MatchedCount, updateResult.ModifiedCount)
-	}
-
-	return nil
-}
-
 func UpdateValueWithAnnotator(b []byte, collection *mongo.Collection, annotator string) error {
 	var annotations []Annotation
 	var filter, update bson.D
