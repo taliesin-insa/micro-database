@@ -46,7 +46,6 @@ func TestMain(m *testing.M) {
 
 func setup() {
 	os.Setenv("MICRO_ENVIRONMENT", "test")
-	Database = Client.Database("taliesin").Collection("test")
 	log.Println("Started Tests")
 }
 
@@ -56,6 +55,7 @@ func shutdown() {
 }
 
 func TestInsert(t *testing.T) {
+	coll := Client.Database("taliesin_test").Collection("test_insert")
 	p0 := PiFFStruct{
 		Meta:     Meta{},
 		Location: nil,
@@ -77,16 +77,18 @@ func TestInsert(t *testing.T) {
 	tab := [2]Picture{doc0, doc1}
 
 	b, _ := json.Marshal(tab)
-	_, err := InsertMany(b, Database)
+	_, err := InsertMany(b, coll)
 	assert.Nil(t, err)
 }
 
 func TestFindFail(t *testing.T) {
-	_, err := FindOne(primitive.NewObjectID(), Database)
+	coll := Client.Database("taliesin_test").Collection("test_find_fail")
+	_, err := FindOne(primitive.NewObjectID(), coll)
 	assert.NotNil(t, err)
 }
 
 func TestFind(t *testing.T) {
+	coll := Client.Database("taliesin_test").Collection("test_find")
 	p0 := PiFFStruct{
 		Meta:     Meta{},
 		Location: nil,
@@ -99,11 +101,11 @@ func TestFind(t *testing.T) {
 
 	tab := [1]Picture{doc0}
 	b, _ := json.Marshal(tab)
-	res, _ := InsertMany(b, Database)
+	res, _ := InsertMany(b, coll)
 
 	id := res[0].(primitive.ObjectID)
 
-	pic, err := FindOne(id, Database)
+	pic, err := FindOne(id, coll)
 	assert.Nil(t, err)
 
 	doc0.Id = id
