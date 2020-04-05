@@ -126,6 +126,33 @@ func TestFind(t *testing.T) {
 }
 
 func TestFindAll(t *testing.T) {
+	coll := Client.Database("taliesin_test").Collection("test_findall")
+	p0 := PiFFStruct{
+		Meta:     Meta{},
+		Location: nil,
+		Data:     nil,
+		Children: nil,
+		Parent:   0,
+	}
+	doc0 := Picture{primitive.NewObjectID(), p0, "/temp/none0", "", false, false, false, false, ""}
+	p1 := PiFFStruct{
+		Meta:     Meta{},
+		Location: nil,
+		Data:     nil,
+		Children: nil,
+		Parent:   0,
+	}
+	doc1 := Picture{primitive.NewObjectID(), p1, "/temp/none1", "", false, false, false, false, ""}
+	tab := [2]Picture{doc0, doc1}
+	b, _ := json.Marshal(tab)
+	InsertMany(b, coll)
+
+	pics, err := FindAll(coll)
+
+	assert.Nil(t, err)
+	assert.Equal(t, 2, len(pics))
+	assert.Equal(t, p0, pics[0].PiFF)
+	assert.Equal(t, "/temp/none1", pics[1].Url)
 
 }
 
@@ -193,7 +220,7 @@ func TestStatusTotal(t *testing.T) {
 	doc1 := Picture{primitive.NewObjectID(), p1, "/temp/none1", "", false, false, false, false, ""}
 	tab := [2]Picture{doc0, doc1}
 	b, _ := json.Marshal(tab)
-	_, err := InsertMany(b, Database)
+	InsertMany(b, Database)
 
 	request, err := http.NewRequest("GET", "/db/status", nil)
 	assert.Nil(t, err)
