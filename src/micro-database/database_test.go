@@ -122,3 +122,39 @@ func TestFind(t *testing.T) {
 	assert.Equal(t, doc0, pic)
 
 }
+
+func TestFindAll(t *testing.T) {
+
+}
+
+func TestFindManyUnused(t *testing.T) {
+
+}
+
+func TestFindManyForSuggestion(t *testing.T) {
+
+}
+
+func TestUpdateFlags(t *testing.T) {
+
+}
+
+func TestUpdateValue(t *testing.T) {
+
+}
+
+func TestUpdateValueWithAnnotator(t *testing.T) {
+
+}
+
+func TestDeleteAll(t *testing.T) {
+
+}
+
+func TestCountSnippets(t *testing.T) {
+
+}
+
+func TestCountFlag(t *testing.T) {
+
+}
