@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"github.com/stretchr/testify/assert"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -40,7 +41,10 @@ var EmptyPiFF = PiFFStruct{
 func TestMain(m *testing.M) {
 	setup()
 	code := m.Run()
-	shutdown()
+	errShutdown := shutdown()
+	if errShutdown != nil {
+		log.Println("Could not drop database")
+	}
 	os.Exit(code)
 }
 
@@ -49,9 +53,15 @@ func setup() {
 	log.Println("Started Tests")
 }
 
-func shutdown() {
+func shutdown() error {
+	database := Client.Database("taliesin_test")
+	err := database.Drop(context.TODO())
+	if err != nil {
+		return err
+	}
 	Disconnect(Client)
 	log.Println("Ended Tests")
+	return nil
 }
 
 func TestInsert(t *testing.T) {
