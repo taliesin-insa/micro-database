@@ -6,6 +6,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"log"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"testing"
 )
@@ -147,10 +149,79 @@ func TestDeleteAll(t *testing.T) {
 
 }
 
-func TestCountSnippets(t *testing.T) {
+func TestStatusZero(t *testing.T) {
+	Database = Client.Database("taliesin_test").Collection("test_status_zero")
+	request, err := http.NewRequest("GET", "/db/status", nil)
+	assert.Nil(t, err)
+
+	recorder := httptest.NewRecorder()
+	status(recorder, request)
+
+	statusCode := recorder.Code
+	assert.Equal(t, http.StatusOK, statusCode)
+
+	var status Status
+
+	err = json.Unmarshal(recorder.Body.Bytes(), &status)
+	assert.Nil(t, err)
+
+	assert.True(t, status.DbUp)
+	assert.Equal(t, int64(0), status.Total)
+	assert.Equal(t, int64(0), status.Annotated)
+	assert.Equal(t, int64(0), status.Unreadable)
 
 }
 
-func TestCountFlag(t *testing.T) {
+func TestStatusTotal(t *testing.T) {
+	Database = Client.Database("taliesin_test").Collection("test_status_total")
+
+	p0 := PiFFStruct{
+		Meta:     Meta{},
+		Location: nil,
+		Data:     nil,
+		Children: nil,
+		Parent:   0,
+	}
+	doc0 := Picture{primitive.NewObjectID(), p0, "/temp/none0", "", false, false, false, false, ""}
+	p1 := PiFFStruct{
+		Meta:     Meta{},
+		Location: nil,
+		Data:     nil,
+		Children: nil,
+		Parent:   0,
+	}
+	doc1 := Picture{primitive.NewObjectID(), p1, "/temp/none1", "", false, false, false, false, ""}
+	tab := [2]Picture{doc0, doc1}
+	b, _ := json.Marshal(tab)
+	_, err := InsertMany(b, Database)
+
+	request, err := http.NewRequest("GET", "/db/status", nil)
+	assert.Nil(t, err)
+
+	recorder := httptest.NewRecorder()
+	status(recorder, request)
+
+	statusCode := recorder.Code
+	assert.Equal(t, http.StatusOK, statusCode)
+
+	var status Status
+
+	err = json.Unmarshal(recorder.Body.Bytes(), &status)
+	assert.Nil(t, err)
+
+	assert.True(t, status.DbUp)
+	assert.Equal(t, int64(2), status.Total)
+	assert.Equal(t, int64(0), status.Annotated)
+	assert.Equal(t, int64(0), status.Unreadable)
+
+}
+
+func TestStatusAnnotated(t *testing.T) {
+	Database = Client.Database("taliesin_test").Collection("test_status_annotated")
+
+}
+
+func TestStatusUnreadable(t *testing.T) {
+	Database = Client.Database("taliesin_test").Collection("test_status_unreadable")
 
 }
