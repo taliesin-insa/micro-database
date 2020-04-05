@@ -140,8 +140,8 @@ func InsertMany(b []byte, collection *mongo.Collection) ([]interface{}, error) {
 	return insertManyResult.InsertedIDs, nil
 }
 
-func FindOne(id string, collection *mongo.Collection) (Picture, error) {
-	filter := bson.D{{"id", id}}
+func FindOne(id primitive.ObjectID, collection *mongo.Collection) (Picture, error) {
+	filter := bson.D{{"_id", id}}
 	var result Picture
 
 	err := collection.FindOne(context.TODO(), filter).Decode(&result)

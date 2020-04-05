@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 	"io/ioutil"
@@ -61,7 +62,13 @@ func createEntry(w http.ResponseWriter, r *http.Request) {
 }
 
 func selectById(w http.ResponseWriter, r *http.Request) {
-	entryId := mux.Vars(r)["id"]
+	entryId, err := primitive.ObjectIDFromHex(mux.Vars(r)["id"])
+	if err != nil {
+		log.Printf("[ERROR] : %v", err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(fmt.Sprintf("[MICRO-DATABASE] %v", err.Error())))
+		return
+	}
 
 	entry, err := FindOne(entryId, Database)
 	if err != nil {
