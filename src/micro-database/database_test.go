@@ -244,6 +244,60 @@ func TestFindManyForSuggestion(t *testing.T) {
 }
 
 func TestUpdateFlags(t *testing.T) {
+	Database = Client.Database("taliesin_test").Collection("test_update_value")
+	data := Data{}
+	p0 := PiFFStruct{
+		Meta:     Meta{},
+		Location: nil,
+		Data:     []Data{data},
+		Children: nil,
+		Parent:   0,
+	}
+	fakeid, _ := primitive.ObjectIDFromHex("face")
+	doc0 := Picture{fakeid, p0, "/temp/none0", "", false, false, false, false, ""}
+	p1 := PiFFStruct{
+		Meta:     Meta{},
+		Location: nil,
+		Data:     []Data{data},
+		Children: nil,
+		Parent:   0,
+	}
+	doc1 := Picture{fakeid, p1, "/temp/none1", "", false, false, false, false, ""}
+	tab := [2]Picture{doc0, doc1}
+	b, _ := json.Marshal(tab)
+	res, _ := InsertMany(b, Database)
+	doc0.Id = res[0].(primitive.ObjectID)
+	doc1.Id = res[1].(primitive.ObjectID)
+
+	mod0 := Modification{
+		Id:    doc0.Id,
+		Flag:  "Unreadable",
+		Value: true,
+	}
+	mod1 := Modification{
+		Id:    doc1.Id,
+		Flag:  "Corrected",
+		Value: true,
+	}
+	tab0 := [2]Modification{mod0, mod1}
+	body0, _ := json.Marshal(tab0)
+	request, _ := http.NewRequest("PUT", "/db/update/flags", bytes.NewBuffer(body0))
+
+	recorder0 := httptest.NewRecorder()
+	updateFlags(recorder0, request)
+	assert.Equal(t, http.StatusNoContent, recorder0.Code)
+
+	pic, _ := FindOne(doc0.Id, Database)
+	assert.False(t, pic.Annotated)
+	assert.True(t, pic.Unreadable)
+	assert.False(t, pic.Corrected)
+	assert.False(t, pic.SentToReco)
+
+	pic, _ = FindOne(doc1.Id, Database)
+	assert.False(t, pic.Annotated)
+	assert.False(t, pic.Unreadable)
+	assert.True(t, pic.Corrected)
+	assert.False(t, pic.SentToReco)
 
 }
 
