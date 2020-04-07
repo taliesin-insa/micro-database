@@ -58,13 +58,13 @@ type Picture struct {
 
 type Modification struct {
 	Id    primitive.ObjectID `json:"Id"`
-	Flag  string             `json:"flag"`
-	Value bool               `json:"value"`
+	Flag  string             `json:"Flag"`
+	Value bool               `json:"Value"`
 }
 
 type Annotation struct {
 	Id    primitive.ObjectID `json:"Id"`
-	Value string             `json:"value"`
+	Value string             `json:"Value"`
 }
 
 func checkError(err error) {

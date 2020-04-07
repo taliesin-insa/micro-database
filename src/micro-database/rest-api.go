@@ -189,7 +189,7 @@ func updateValue(w http.ResponseWriter, r *http.Request) {
 
 func updateValueWithAnnotator(w http.ResponseWriter, r *http.Request) {
 	annotator := mux.Vars(r)["annotator"]
-	log.Println("Update value : ")
+	log.Println("Update value by " + annotator + " : ")
 
 	reqBody, err := ioutil.ReadAll(r.Body)
 	if err != nil {

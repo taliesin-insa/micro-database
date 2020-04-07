@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"github.com/stretchr/testify/assert"
@@ -41,18 +42,27 @@ var EmptyPiFF = PiFFStruct{
 }
 
 func TestMain(m *testing.M) {
-	setup()
+	errSetup := setup()
+	if errSetup != nil {
+		log.Println("Could not drop database on test start")
+	}
 	code := m.Run()
 	errShutdown := shutdown()
 	if errShutdown != nil {
-		log.Println("Could not drop database")
+		log.Println("Could not drop database on test end")
 	}
 	os.Exit(code)
 }
 
-func setup() {
+func setup() error {
+	database := Client.Database("taliesin_test")
+	err := database.Drop(context.TODO())
+	if err != nil {
+		return err
+	}
 	os.Setenv("MICRO_ENVIRONMENT", "test")
 	log.Println("Started Tests")
+	return nil
 }
 
 func shutdown() error {
