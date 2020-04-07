@@ -168,7 +168,7 @@ func TestUpdateFlags(t *testing.T) {
 
 }
 
-func TestUpdateValueWithAnnotator(t *testing.T) {
+func TestUpdateValue(t *testing.T) {
 
 }
 

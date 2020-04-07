@@ -377,7 +377,7 @@ Annote multiple documents.
 Set the annotated flag to true
 byte : Flot JSON a list of Annotation objects
 */
-func UpdateValueWithAnnotator(b []byte, collection *mongo.Collection, annotator string) error {
+func UpdateValue(b []byte, collection *mongo.Collection, annotator string) error {
 	var annotations []Annotation
 	var filter, update bson.D
 	err := json.Unmarshal(b, &annotations)
