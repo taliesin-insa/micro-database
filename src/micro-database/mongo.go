@@ -407,12 +407,6 @@ func UpdateValue(b []byte, collection *mongo.Collection, annotator string) error
 /**
   Flush the database
 */
-func DeleteAllIncomplete(collection *mongo.Collection) {
-	deleteResult, err := collection.DeleteMany(context.TODO(), bson.D{{}})
-	checkError(err)
-	log.Printf("Deleted %v documents in the trainers collection\n", deleteResult.DeletedCount)
-}
-
 func DeleteAll(collection *mongo.Collection) error {
 	deleteResult, err := collection.DeleteMany(context.TODO(), bson.D{{}})
 	if err != nil {

@@ -255,12 +255,6 @@ func status(w http.ResponseWriter, r *http.Request) {
 
 }
 
-//Deprecated : Not enough error management
-func deleteAllIncomplete(w http.ResponseWriter, r *http.Request) {
-	DeleteAllIncomplete(Database)
-	w.WriteHeader(http.StatusAccepted)
-}
-
 func deleteAll(w http.ResponseWriter, r *http.Request) {
 	err := DeleteAll(Database)
 	if err != nil {
@@ -290,7 +284,6 @@ func main() {
 	router.HandleFunc("/db/update/value", updateValue).Methods("PUT")
 	router.HandleFunc("/db/update/value/{annotator}", updateValueWithAnnotator).Methods("PUT")
 
-	router.HandleFunc("/db/delete/all", deleteAllIncomplete).Methods("PUT")
 	router.HandleFunc("/db/delete/all", deleteAll).Methods("DELETE")
 
 	log.Fatal(http.ListenAndServe(":8080", router))
