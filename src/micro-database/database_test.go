@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"log"
@@ -247,6 +248,64 @@ func TestUpdateFlags(t *testing.T) {
 }
 
 func TestUpdateValue(t *testing.T) {
+	Database = Client.Database("taliesin_test").Collection("test_update_value")
+	data := Data{}
+	p0 := PiFFStruct{
+		Meta:     Meta{},
+		Location: nil,
+		Data:     []Data{data},
+		Children: nil,
+		Parent:   0,
+	}
+	fakeid, _ := primitive.ObjectIDFromHex("face")
+	doc0 := Picture{fakeid, p0, "/temp/none0", "", false, false, false, false, ""}
+	p1 := PiFFStruct{
+		Meta:     Meta{},
+		Location: nil,
+		Data:     []Data{data},
+		Children: nil,
+		Parent:   0,
+	}
+	doc1 := Picture{fakeid, p1, "/temp/none1", "", false, false, false, false, ""}
+	tab := [2]Picture{doc0, doc1}
+	b, _ := json.Marshal(tab)
+	res, _ := InsertMany(b, Database)
+	doc0.Id = res[0].(primitive.ObjectID)
+	doc1.Id = res[1].(primitive.ObjectID)
+
+	annot0 := Annotation{
+		Id:    doc0.Id,
+		Value: "Test without annotator",
+	}
+	tab0 := [1]Annotation{annot0}
+	body0, _ := json.Marshal(tab0)
+	request, _ := http.NewRequest("PUT", "/db/update/value", bytes.NewBuffer(body0))
+
+	recorder0 := httptest.NewRecorder()
+	updateValue(recorder0, request)
+	assert.Equal(t, http.StatusNoContent, recorder0.Code)
+
+	annot1 := Annotation{
+		Id:    doc1.Id,
+		Value: "Test with annotator",
+	}
+	tab1 := [1]Annotation{annot1}
+	body1, _ := json.Marshal(tab1)
+	request, _ = http.NewRequest("PUT", "/db/update/value/test", bytes.NewBuffer(body1))
+	request = mux.SetURLVars(request, map[string]string{"annotator": "test"})
+
+	recorder1 := httptest.NewRecorder()
+	updateValueWithAnnotator(recorder1, request)
+	assert.Equal(t, http.StatusNoContent, recorder1.Code)
+
+	pic, _ := FindOne(doc0.Id, Database)
+	assert.Equal(t, pic.PiFF.Data[0].Value, "Test without annotator")
+	assert.True(t, pic.Annotated)
+
+	pic, _ = FindOne(doc1.Id, Database)
+	assert.Equal(t, pic.PiFF.Data[0].Value, "Test with annotator")
+	assert.True(t, pic.Annotated)
+	assert.Equal(t, "test", pic.Annotator)
 
 }
 
