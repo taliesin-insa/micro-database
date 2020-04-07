@@ -96,7 +96,7 @@ Pings the MongoDB database and sends the result as a boolean.
 + Response 200 (application/json)
     + Body
         ~~~
-        { 'isDBUp': true }
+        {"isDBUp":true,"total":4,"annotated":0,"unreadable":0}
         ~~~
 + Response 200 (application/json)
     + Body

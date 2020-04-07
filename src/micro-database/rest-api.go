@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 	"io/ioutil"
@@ -61,7 +62,13 @@ func createEntry(w http.ResponseWriter, r *http.Request) {
 }
 
 func selectById(w http.ResponseWriter, r *http.Request) {
-	entryId := mux.Vars(r)["id"]
+	entryId, err := primitive.ObjectIDFromHex(mux.Vars(r)["id"])
+	if err != nil {
+		log.Printf("[ERROR] : %v", err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(fmt.Sprintf("[MICRO-DATABASE] %v", err.Error())))
+		return
+	}
 
 	entry, err := FindOne(entryId, Database)
 	if err != nil {
@@ -169,7 +176,7 @@ func updateValue(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = UpdateValue(reqBody, Database)
+	err = UpdateValue(reqBody, Database, "unspecified")
 	if err != nil {
 		log.Printf("[ERROR] : %v", err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
@@ -182,7 +189,7 @@ func updateValue(w http.ResponseWriter, r *http.Request) {
 
 func updateValueWithAnnotator(w http.ResponseWriter, r *http.Request) {
 	annotator := mux.Vars(r)["annotator"]
-	log.Println("Update value : ")
+	log.Println("Update value by " + annotator + " : ")
 
 	reqBody, err := ioutil.ReadAll(r.Body)
 	if err != nil {
@@ -192,7 +199,7 @@ func updateValueWithAnnotator(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = UpdateValueWithAnnotator(reqBody, Database, annotator)
+	err = UpdateValue(reqBody, Database, annotator)
 	if err != nil {
 		log.Printf("[ERROR] : %v", err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
@@ -248,12 +255,6 @@ func status(w http.ResponseWriter, r *http.Request) {
 
 }
 
-//Deprecated : Not enough error management
-func deleteAllIncomplete(w http.ResponseWriter, r *http.Request) {
-	DeleteAllIncomplete(Database)
-	w.WriteHeader(http.StatusAccepted)
-}
-
 func deleteAll(w http.ResponseWriter, r *http.Request) {
 	err := DeleteAll(Database)
 	if err != nil {
@@ -283,7 +284,6 @@ func main() {
 	router.HandleFunc("/db/update/value", updateValue).Methods("PUT")
 	router.HandleFunc("/db/update/value/{annotator}", updateValueWithAnnotator).Methods("PUT")
 
-	router.HandleFunc("/db/delete/all", deleteAllIncomplete).Methods("PUT")
 	router.HandleFunc("/db/delete/all", deleteAll).Methods("DELETE")
 
 	log.Fatal(http.ListenAndServe(":8080", router))

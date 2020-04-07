@@ -58,13 +58,13 @@ type Picture struct {
 
 type Modification struct {
 	Id    primitive.ObjectID `json:"Id"`
-	Flag  string             `json:"flag"`
-	Value bool               `json:"value"`
+	Flag  string             `json:"Flag"`
+	Value bool               `json:"Value"`
 }
 
 type Annotation struct {
 	Id    primitive.ObjectID `json:"Id"`
-	Value string             `json:"value"`
+	Value string             `json:"Value"`
 }
 
 func checkError(err error) {
@@ -107,8 +107,6 @@ func Connect() *mongo.Client {
 		Database = client.Database("taliesin").Collection("prod")
 	} else if os.Getenv("MICRO_ENVIRONMENT") == "dev" {
 		Database = client.Database("taliesin").Collection("dev")
-	} else if os.Getenv("MICRO_ENVIRONMENT") == "test" {
-		Database = client.Database("taliesin").Collection("test")
 	} else {
 		Database = client.Database("taliesin").Collection("local")
 	}
@@ -121,29 +119,6 @@ func Disconnect(client *mongo.Client) {
 	err := client.Disconnect(context.TODO())
 	checkError(err)
 	log.Printf("Connection to MongoDB closed.\n")
-}
-
-/**
-From a json flow, insert one entry in the database -> Useless
-*/
-func InsertOne(b []byte, collection *mongo.Collection) error {
-	var pic Picture
-	var piff PiFFStruct
-
-	err := json.Unmarshal(b, &piff)
-	if err != nil {
-		return err
-	}
-
-	pic.PiFF = piff
-
-	insertResult, err := collection.InsertOne(context.TODO(), pic)
-	if err != nil {
-		return err
-	}
-
-	log.Printf("Inserted a single document: %v\n", insertResult.InsertedID)
-	return nil
 }
 
 /**
@@ -165,8 +140,8 @@ func InsertMany(b []byte, collection *mongo.Collection) ([]interface{}, error) {
 	return insertManyResult.InsertedIDs, nil
 }
 
-func FindOne(id string, collection *mongo.Collection) (Picture, error) {
-	filter := bson.D{{"id", id}}
+func FindOne(id primitive.ObjectID, collection *mongo.Collection) (Picture, error) {
+	filter := bson.D{{"_id", id}}
 	var result Picture
 
 	err := collection.FindOne(context.TODO(), filter).Decode(&result)
@@ -402,34 +377,7 @@ Annote multiple documents.
 Set the annotated flag to true
 byte : Flot JSON a list of Annotation objects
 */
-func UpdateValue(b []byte, collection *mongo.Collection) error {
-	var annotations []Annotation
-	var filter, update bson.D
-	err := json.Unmarshal(b, &annotations)
-	if err != nil {
-		return err
-	}
-
-	log.Printf("Value : %v\n", annotations)
-
-	for _, annot := range annotations {
-		filter = bson.D{{"_id", annot.Id}}
-		update = bson.D{{"$set", bson.D{
-			{"PiFF.Data.0.Value", annot.Value},
-			{"Annotated", true},
-			{"Annotator", "unspecified"},
-		}}}
-		updateResult, err := collection.UpdateOne(context.TODO(), filter, update)
-		if err != nil {
-			return err
-		}
-		log.Printf("Matched %v documents and updated %v documents.\n", updateResult.MatchedCount, updateResult.ModifiedCount)
-	}
-
-	return nil
-}
-
-func UpdateValueWithAnnotator(b []byte, collection *mongo.Collection, annotator string) error {
+func UpdateValue(b []byte, collection *mongo.Collection, annotator string) error {
 	var annotations []Annotation
 	var filter, update bson.D
 	err := json.Unmarshal(b, &annotations)
@@ -459,12 +407,6 @@ func UpdateValueWithAnnotator(b []byte, collection *mongo.Collection, annotator 
 /**
   Flush the database
 */
-func DeleteAllIncomplete(collection *mongo.Collection) {
-	deleteResult, err := collection.DeleteMany(context.TODO(), bson.D{{}})
-	checkError(err)
-	log.Printf("Deleted %v documents in the trainers collection\n", deleteResult.DeletedCount)
-}
-
 func DeleteAll(collection *mongo.Collection) error {
 	deleteResult, err := collection.DeleteMany(context.TODO(), bson.D{{}})
 	if err != nil {
