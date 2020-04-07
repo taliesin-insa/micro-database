@@ -66,6 +66,8 @@ func shutdown() error {
 	return nil
 }
 
+//Note that I use the global Database when I test requests as a whole and I make a local variable when I can to limit concurrent accesses to this variable
+
 func TestInsert(t *testing.T) {
 	coll := Client.Database("taliesin_test").Collection("test_insert")
 	p0 := PiFFStruct{
@@ -157,11 +159,77 @@ func TestFindAll(t *testing.T) {
 }
 
 func TestFindManyUnused(t *testing.T) {
+	coll := Client.Database("taliesin_test").Collection("test_find_unused")
+	p0 := PiFFStruct{
+		Meta:     Meta{},
+		Location: nil,
+		Data:     nil,
+		Children: nil,
+		Parent:   0,
+	}
+	doc0 := Picture{primitive.NewObjectID(), p0, "/temp/none0", "", false, false, false, false, ""}
+	p1 := PiFFStruct{
+		Meta:     Meta{},
+		Location: nil,
+		Data:     nil,
+		Children: nil,
+		Parent:   0,
+	}
+	doc1 := Picture{primitive.NewObjectID(), p1, "/temp/none1", "", false, false, false, false, ""}
+	tab := [2]Picture{doc0, doc1}
+	b, _ := json.Marshal(tab)
+	InsertMany(b, coll)
+
+	picsTest1, err := FindManyUnused(1, coll)
+
+	assert.Nil(t, err)
+	assert.Equal(t, 1, len(picsTest1))
+
+	picsTest2, err := FindManyUnused(2, coll)
+	assert.Nil(t, err)
+	assert.Equal(t, 2, len(picsTest2))
 
 }
 
 func TestFindManyForSuggestion(t *testing.T) {
+	coll := Client.Database("taliesin_test").Collection("test_find_suggestion")
+	p0 := PiFFStruct{
+		Meta:     Meta{},
+		Location: nil,
+		Data:     nil,
+		Children: nil,
+		Parent:   0,
+	}
+	doc0 := Picture{primitive.NewObjectID(), p0, "/temp/none0", "", false, false, false, false, ""}
+	p1 := PiFFStruct{
+		Meta:     Meta{},
+		Location: nil,
+		Data:     nil,
+		Children: nil,
+		Parent:   0,
+	}
+	doc1 := Picture{primitive.NewObjectID(), p1, "/temp/none1", "", false, false, false, false, ""}
+	tab := [2]Picture{doc0, doc1}
+	b, _ := json.Marshal(tab)
+	InsertMany(b, coll)
 
+	picsTest1, err := FindManyForSuggestion(1, coll)
+
+	assert.Nil(t, err)
+	assert.Equal(t, 1, len(picsTest1))
+
+	picTest1 := picsTest1[0]
+
+	picsTest2, err := FindManyForSuggestion(2, coll)
+	assert.Nil(t, err)
+	assert.Equal(t, 1, len(picsTest2))
+
+	picTest2 := picsTest2[0]
+	assert.NotEqual(t, picTest1, picTest2)
+
+	picsTest3, err := FindManyForSuggestion(1, coll)
+	assert.Nil(t, err)
+	assert.Equal(t, 0, len(picsTest3))
 }
 
 func TestUpdateFlags(t *testing.T) {
@@ -173,6 +241,34 @@ func TestUpdateValue(t *testing.T) {
 }
 
 func TestDeleteAll(t *testing.T) {
+	coll := Client.Database("taliesin_test").Collection("test_delete_all")
+	p0 := PiFFStruct{
+		Meta:     Meta{},
+		Location: nil,
+		Data:     nil,
+		Children: nil,
+		Parent:   0,
+	}
+	doc0 := Picture{primitive.NewObjectID(), p0, "/temp/none0", "", false, false, false, false, ""}
+	p1 := PiFFStruct{
+		Meta:     Meta{},
+		Location: nil,
+		Data:     nil,
+		Children: nil,
+		Parent:   0,
+	}
+	doc1 := Picture{primitive.NewObjectID(), p1, "/temp/none1", "", false, false, false, false, ""}
+	tab := [2]Picture{doc0, doc1}
+	b, _ := json.Marshal(tab)
+	InsertMany(b, coll)
+
+	pics, _ := FindAll(coll)
+	assert.NotEqual(t, 0, len(pics))
+
+	err := DeleteAll(coll)
+	assert.Nil(t, err)
+	pics, _ = FindAll(coll)
+	assert.Equal(t, 0, len(pics))
 
 }
 
