@@ -101,6 +101,19 @@ func newPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if len(entry) < amount {
+		unsused, err := FindManyWithSuggestion(amount-len(entry), Database)
+		if err != nil {
+			log.Printf("[ERROR] : %v", err.Error())
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(fmt.Sprintf("[MICRO-DATABASE] %v", err.Error())))
+			return
+		}
+		for _, pic := range unsused {
+			entry = append(entry, pic)
+		}
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	body, _ := json.Marshal(entry)
 	w.WriteHeader(http.StatusOK)
