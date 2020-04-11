@@ -107,6 +107,42 @@ func newPage(w http.ResponseWriter, r *http.Request) {
 	w.Write(body)
 }
 
+func newPageWithSuggestions(w http.ResponseWriter, r *http.Request) {
+	entryAmnt := mux.Vars(r)["amount"]
+	amount, err := strconv.Atoi(entryAmnt)
+	if err != nil {
+		log.Printf("[ERROR] : %v", err.Error())
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(fmt.Sprintf("[MICRO-DATABASE] %v", err.Error())))
+	}
+
+	entry, err := FindManyWithSuggestion(amount, Database)
+	if err != nil {
+		log.Printf("[ERROR] : %v", err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(fmt.Sprintf("[MICRO-DATABASE] %v", err.Error())))
+		return
+	}
+
+	if len(entry) < amount {
+		unsused, err := FindManyUnused(amount-len(entry), Database)
+		if err != nil {
+			log.Printf("[ERROR] : %v", err.Error())
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(fmt.Sprintf("[MICRO-DATABASE] %v", err.Error())))
+			return
+		}
+		for _, pic := range unsused {
+			entry = append(entry, pic)
+		}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	body, _ := json.Marshal(entry)
+	w.WriteHeader(http.StatusOK)
+	w.Write(body)
+}
+
 func newBatchForReco(w http.ResponseWriter, r *http.Request) {
 	entryAmnt := mux.Vars(r)["amount"]
 	amount, err := strconv.Atoi(entryAmnt)
@@ -275,6 +311,7 @@ func main() {
 	router.HandleFunc("/db/select/{id}", selectById).Methods("GET")
 	router.HandleFunc("/db/retrieve/all", getAll).Methods("GET")
 	router.HandleFunc("/db/retrieve/snippets/{amount}", newPage).Methods("GET")
+	router.HandleFunc("/db/retrieve/suggestions/{amount}", newPageWithSuggestions).Methods("GET")
 	router.HandleFunc("/db/retrieve/recognizer/{amount}", newBatchForReco).Methods("GET")
 	router.HandleFunc("/db/status", status).Methods("GET")
 
