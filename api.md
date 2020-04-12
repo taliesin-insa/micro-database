@@ -12,11 +12,12 @@ this only confirms that at least one container with this API is running
     [MICRO-DATABASE] Home Link Joined
     ~~~
 
-## Retrieving random snippets [/db/retrieve/snippets/{amount}]
-This action searches the database for the amount of snippets specified, 
-the snippets are selected randomly among the snippets that haven't been annotated or marked as unreadable
+## Retrieving snippets with annotation suggestions [/db/retrieve/snippets/{amount}]
+This action searches the database for the amount of snippets specified,
+The snippets are first selected randomly among the snippets that have been annotated by the recognizer
+If not enough annotated snippets are found, the application will complete with unannotated snippets 
 + Parameters
-    + amount (number) : Maximum number of snippets to be returned
+    + amount (number) : Number of snippets desired
 
 ### [GET]
 This action has two negative responses defined :  
@@ -46,7 +47,7 @@ the marshalling of the elements or the iteration over the selection results.
                         {
                             "Type": "line",
                             "LocationId": "loc_0",
-                            "Value": "",
+                            "Value": "The effets of marijuana on the human body",
                             "Id": "0"
                         }
                     ],
@@ -54,11 +55,45 @@ the marshalling of the elements or the iteration over the selection results.
                     "Parent": 0
                 },
                 "Url": "/snippets/filename.png",
+                "Annotated": true,
+                "Corrected": false,
+                "SentToReco": true,
+                "Unreadable": false,
+                "Annotator": "$taliesin_recognizer"
+            },
+            {
+                "Id": "5e446bbf1cb586167cef156",
+                "PiFF": {
+                    "Meta": {
+                        "Type": "line",
+                        "URL": ""
+                    },
+                    "Location": [
+                        {
+                            "Type": "line",
+                            "Polygon": [[0,0],[261,0],[261,343],[0,343]],
+                            "Id": "loc_0"
+                        }
+                    ],
+                    "Data": [
+                        {
+                            "Type": "line",
+                            "LocationId": "loc_0",
+                            "Value": "",
+                            "Id": "0"
+                        }
+                    ],
+                    "Children": null,
+                    "Parent": 0
+                },
+                "Url": "/snippets/filename2.png",
                 "Annotated": false,
                 "Corrected": false,
                 "SentToReco": false,
-                "Unreadable": false
+                "Unreadable": false,
+                "Annotator": ""
             }
+      
         ]
         ~~~
 
@@ -74,6 +109,70 @@ the marshalling of the elements or the iteration over the selection results.
         [MICRO-DATABASE] {Go error body}
         ~~~
       
+## Retrieving snippets to be sent to the recognizer [/db/retrieve/recognizer/{amount}]
+This action searches the database for the amount of snippets specified, 
+the snippets are selected randomly among the snippets that haven't been annotated and haven't been sent to the recognizer yet.
+The fact that the snippets have been sent to the recognizer will then be recorded in the database
++ Parameters
+  + amount (number) : Number of snippets desired
+
+### [GET]
+This action has two negative responses defined :  
+It will return a status 400 if an error occurs while converting {amount} to int.   
+It will return a status 500 if an error occurs in the go service, this can happen either in the selection, 
+the marshalling of the elements or the iteration over the selection results.
+
++ Response 200 (application/json)
+  + Body
+      ~~~
+      [
+          {
+              "Id": "5e446bbf1cb5861676336ebd",
+              "PiFF": {
+                  "Meta": {
+                      "Type": "line",
+                      "URL": ""
+                  },
+                  "Location": [
+                      {
+                          "Type": "line",
+                          "Polygon": [[0,0],[261,0],[261,343],[0,343]],
+                          "Id": "loc_0"
+                      }
+                  ],
+                  "Data": [
+                      {
+                          "Type": "line",
+                          "LocationId": "loc_0",
+                          "Value": "",
+                          "Id": "0"
+                      }
+                  ],
+                  "Children": null,
+                  "Parent": 0
+              },
+              "Url": "/snippets/filename.png",
+              "Annotated": false,
+              "Corrected": false,
+              "SentToReco": false,
+              "Unreadable": false,
+              "Annotator": ""
+          }
+      ]
+      ~~~
+
++ Response 400 (text/plain)  
+  + Body
+      ~~~
+      [MICRO-DATABASE] {Go error body}
+      ~~~
+
++ Response 500 (text/plain)  
+  + Body 
+      ~~~
+      [MICRO-DATABASE] {Go error body}
+      ~~~
+                  
 ## Retrieving all the database [/db/retrieve/all]
 ### [GET]
 This action will return a status 500 if an error occurs in the Go service, 
