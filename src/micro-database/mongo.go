@@ -201,6 +201,52 @@ func FindManyUnused(amount int, collection *mongo.Collection) ([]Picture, error)
 	return results, nil
 }
 
+func FindManyWithSuggestion(amount int, collection *mongo.Collection) ([]Picture, error) {
+	// Pass these options to the Find method
+	pipeline := mongo.Pipeline{
+		bson.D{{"$match", bson.D{{"$and",
+			bson.A{
+				bson.D{{"Annotated", true}},
+				bson.D{{"Unreadable", false}},
+				bson.D{{"Annotator", "$taliesin_recognizer"}},
+			}}}}},
+		bson.D{{"$sample", bson.D{{"size", amount}}}},
+	}
+
+	opts := options.Aggregate()
+
+	// Here's an array in which you can store the decoded documents
+	var results []Picture
+
+	// Passing bson.D{{}} as the filter matches all documents in the collection
+	cur, err := collection.Aggregate(context.TODO(), pipeline, opts)
+	if err != nil {
+		return nil, err
+	}
+
+	// Finding multiple documents returns a cursor
+	// Iterating through the cursor allows us to decode documents one at a time
+	for cur.Next(context.TODO()) {
+		// create a value into which the single document can be decoded
+		var elem Picture
+		err := cur.Decode(&elem)
+		if err != nil {
+			return nil, err
+		}
+		results = append(results, elem)
+	}
+
+	if err := cur.Err(); err != nil {
+		return nil, err
+	} else {
+		log.Printf("Found multiple documents : %v\n", results)
+	}
+	// Close the cursor once finished
+	cur.Close(context.TODO())
+
+	return results, nil
+}
+
 func FindManyForSuggestion(amount int, collection *mongo.Collection) ([]Picture, error) {
 	// Pass these options to the Find method
 	pipeline := mongo.Pipeline{
@@ -305,44 +351,6 @@ func FindAll(collection *mongo.Collection) ([]Picture, error) {
 	return results, nil
 }
 
-func FindList(key string, value int, collection *mongo.Collection) []Picture {
-
-	// Pass these options to the Find method
-	findOptions := options.Find()
-	//findOptions.SetLimit(2)
-
-	// Here's an array in which you can store the decoded documents
-	var results []Picture
-
-	// Passing bson.D{{}} as the filter matches all documents in the collection
-	cur, err := collection.Find(context.TODO(), bson.D{{key, value}}, findOptions)
-	checkError(err)
-
-	// Finding multiple documents returns a cursor
-	// Iterating through the cursor allows us to decode documents one at a time
-	for cur.Next(context.TODO()) {
-
-		// create a value into which the single document can be decoded
-		var elem Picture
-		err := cur.Decode(&elem)
-		if err != nil {
-			log.Printf("%v\n", err)
-		}
-
-		results = append(results, elem)
-	}
-
-	if err := cur.Err(); err != nil {
-		log.Printf("%v\n", err)
-	} else {
-		log.Printf("Found multiple documents : %+v\n", results)
-	}
-	// Close the cursor once finished
-	cur.Close(context.TODO())
-
-	return results
-}
-
 /**
 Modify the différents flags
 byte : Flot JSON a list of Modification objects
@@ -414,17 +422,6 @@ func DeleteAll(collection *mongo.Collection) error {
 	}
 	log.Printf("Deleted %v documents in the trainers collection\n", deleteResult.DeletedCount)
 	return nil
-}
-
-func DeleteOne(key string, value int, collection *mongo.Collection) {
-	filter := bson.D{{key, value}}
-
-	del, err := collection.DeleteOne(context.TODO(), filter)
-	if err != nil {
-		log.Printf("%v\n", err)
-	} else {
-		log.Printf("Deleted %+v document\n", del.DeletedCount)
-	}
 }
 
 func CountSnippets(collection *mongo.Collection) (int64, error) {
