@@ -78,7 +78,7 @@ the marshalling of the elements or the iteration over the selection results.
 ## Retrieving snippets with annotation suggestions [/db/retrieve/recognizer/{amount}]
 This action searches the database for the amount of snippets specified,
 The snippets are first selected randomly among the snippets that have been annotated by the recognizer
-If not enough annotated snippets are found, the application will complete with unanntoated snippets 
+If not enough annotated snippets are found, the application will complete with unannotated snippets 
 + Parameters
     + amount (number) : Number of snippets desired
 
