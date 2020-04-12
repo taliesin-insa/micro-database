@@ -75,7 +75,7 @@ the marshalling of the elements or the iteration over the selection results.
         [MICRO-DATABASE] {Go error body}
         ~~~
       
-## Retrieving snippets with annotation suggestions [/db/retrieve/recognizer/{amount}]
+## Retrieving snippets with annotation suggestions [/db/retrieve/suggestions/{amount}]
 This action searches the database for the amount of snippets specified,
 The snippets are first selected randomly among the snippets that have been annotated by the recognizer
 If not enough annotated snippets are found, the application will complete with unannotated snippets 
@@ -172,7 +172,7 @@ the marshalling of the elements or the iteration over the selection results.
         [MICRO-DATABASE] {Go error body}
         ~~~
       
-## Retrieving snippets to be sent to the recognizer [/db/retrieve/snippets/{amount}]
+## Retrieving snippets to be sent to the recognizer [/db/retrieve/recognizer/{amount}]
 This action searches the database for the amount of snippets specified, 
 the snippets are selected randomly among the snippets that haven't been annotated and haven't been sent to the recognizer yet.
 The fact that the snippets have been sent to the recognizer will then be recorded in the database
