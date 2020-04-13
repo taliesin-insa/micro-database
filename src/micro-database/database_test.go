@@ -453,6 +453,7 @@ func TestStatusTotal(t *testing.T) {
 	var status Status
 
 	err = json.Unmarshal(recorder.Body.Bytes(), &status)
+	log.Println(recorder.Body.String())
 	assert.Nil(t, err)
 
 	assert.True(t, status.DbUp)
