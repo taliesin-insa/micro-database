@@ -437,3 +437,29 @@ func CountFlag(collection *mongo.Collection, flag string) (int64, error) {
 	res, err := collection.CountDocuments(context.TODO(), filter, opts)
 	return res, err
 }
+
+func CountFlagIgnoringReco(collection *mongo.Collection, flag string) (int64, error) {
+	pipeline := mongo.Pipeline{bson.D{{"$match", bson.D{{"$and",
+		bson.A{
+			bson.D{{flag, true}},
+			bson.D{{"Annotator", bson.D{{"$not", bson.D{{"$regex", "\\$taliesin_recognizer"}}}}}}},
+	}}}}}
+
+	opts := options.Aggregate()
+
+	// Passing bson.D{{}} as the filter matches all documents in the collection
+	cur, err := collection.Aggregate(context.TODO(), pipeline, opts)
+	if err != nil {
+		return -1, err
+	}
+
+	res := int64(0)
+
+	// Finding multiple documents returns a cursor
+	// Iterating through the cursor allows us to decode documents one at a time
+	for cur.Next(context.TODO()) {
+		res++
+	}
+
+	return res, err
+}
