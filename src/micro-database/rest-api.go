@@ -244,7 +244,7 @@ func status(w http.ResponseWriter, r *http.Request) {
 	}
 	res.Total = total
 
-	annotated, err := CountFlagIgnoringReco(Database, "Annotated")
+	annotated, err := CountAnnotatedIgnoringRecoOrUnreadable(Database)
 	if err != nil {
 		log.Printf("[ERROR] : %v", err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
