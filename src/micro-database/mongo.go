@@ -438,10 +438,11 @@ func CountFlag(collection *mongo.Collection, flag string) (int64, error) {
 	return res, err
 }
 
-func CountFlagIgnoringReco(collection *mongo.Collection, flag string) (int64, error) {
+func CountAnnotatedIgnoringRecoOrUnreadable(collection *mongo.Collection) (int64, error) {
 	pipeline := mongo.Pipeline{bson.D{{"$match", bson.D{{"$and",
 		bson.A{
-			bson.D{{flag, true}},
+			bson.D{{"Annotated", true}},
+			bson.D{{"Unreadable", false}},
 			bson.D{{"Annotator", bson.D{{"$not", bson.D{{"$regex", "\\$taliesin_recognizer"}}}}}}},
 	}}}}}
 
