@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -129,11 +130,13 @@ func InsertMany(b []byte, collection *mongo.Collection) ([]interface{}, error) {
 	var pics []interface{}
 	err := json.Unmarshal(b, &pics)
 	if err != nil {
-		return nil, err
+		log.Printf("[UNMARSHAL] : %v", err.Error())
+		return nil, errors.New("Could not unmarshal data")
 	}
 	insertManyResult, err := collection.InsertMany(context.TODO(), pics)
 	if err != nil {
-		return nil, err
+		log.Printf("[MONGO-DRIVER] : %v", err.Error())
+		return nil, errors.New("Error during MongoDB insertion")
 	}
 
 	log.Printf("Inserted multiple documents: %v\n", insertManyResult.InsertedIDs)
@@ -146,7 +149,8 @@ func FindOne(id primitive.ObjectID, collection *mongo.Collection) (Picture, erro
 
 	err := collection.FindOne(context.TODO(), filter).Decode(&result)
 	if err != nil {
-		return Picture{}, err
+		log.Printf("[MONGO-DRIVER] : %v", err.Error())
+		return Picture{}, errors.New("Error during MongoDB selection")
 	} else {
 		log.Printf("Found a single document: %+v\n", result)
 	}
@@ -173,7 +177,8 @@ func FindManyUnused(amount int, collection *mongo.Collection) ([]Picture, error)
 	// Passing bson.D{{}} as the filter matches all documents in the collection
 	cur, err := collection.Aggregate(context.TODO(), pipeline, opts)
 	if err != nil {
-		return nil, err
+		log.Printf("[MONGO-DRIVER] : %v", err.Error())
+		return nil, errors.New("Error during MongoDB selection")
 	}
 
 	// Finding multiple documents returns a cursor
@@ -184,14 +189,16 @@ func FindManyUnused(amount int, collection *mongo.Collection) ([]Picture, error)
 		var elem Picture
 		err := cur.Decode(&elem)
 		if err != nil {
-			return nil, err
+			log.Printf("[DECODE] %v", err)
+			return nil, errors.New("Error while iterating results")
 		}
 
 		results = append(results, elem)
 	}
 
 	if err := cur.Err(); err != nil {
-		return nil, err
+		log.Printf("[CURSOR] %v", err)
+		return nil, errors.New("Error while iterating results")
 	} else {
 		log.Printf("Found multiple documents : %v\n", results)
 	}
@@ -221,7 +228,8 @@ func FindManyWithSuggestion(amount int, collection *mongo.Collection) ([]Picture
 	// Passing bson.D{{}} as the filter matches all documents in the collection
 	cur, err := collection.Aggregate(context.TODO(), pipeline, opts)
 	if err != nil {
-		return nil, err
+		log.Printf("[MONGO-DRIVER] : %v", err.Error())
+		return nil, errors.New("Error during MongoDB selection")
 	}
 
 	// Finding multiple documents returns a cursor
@@ -231,13 +239,15 @@ func FindManyWithSuggestion(amount int, collection *mongo.Collection) ([]Picture
 		var elem Picture
 		err := cur.Decode(&elem)
 		if err != nil {
-			return nil, err
+			log.Printf("[DECODE] %v", err)
+			return nil, errors.New("Error while iterating results")
 		}
 		results = append(results, elem)
 	}
 
 	if err := cur.Err(); err != nil {
-		return nil, err
+		log.Printf("[CURSOR] %v", err)
+		return nil, errors.New("Error while iterating results")
 	} else {
 		log.Printf("Found multiple documents : %v\n", results)
 	}
@@ -267,7 +277,8 @@ func FindManyForSuggestion(amount int, collection *mongo.Collection) ([]Picture,
 	// Passing bson.D{{}} as the filter matches all documents in the collection
 	cur, err := collection.Aggregate(context.TODO(), pipeline, opts)
 	if err != nil {
-		return nil, err
+		log.Printf("[MONGO-DRIVER] : %v", err.Error())
+		return nil, errors.New("Error during MongoDB selection")
 	}
 
 	// Finding multiple documents returns a cursor
@@ -289,14 +300,16 @@ func FindManyForSuggestion(amount int, collection *mongo.Collection) ([]Picture,
 		}
 		_, err = collection.UpdateOne(context.TODO(), filter, update)
 		if err != nil {
-			return nil, err
+			log.Printf("[MONGO-DRIVER] : %v", err.Error())
+			return nil, errors.New("Error during MongoDB update")
 		}
 
 		results = append(results, elem)
 	}
 
 	if err := cur.Err(); err != nil {
-		return nil, err
+		log.Printf("[CURSOR] : %v", err.Error())
+		return nil, errors.New("Error while iterating results")
 	} else {
 		log.Printf("Found multiple documents : %v\n", results)
 	}
@@ -317,7 +330,8 @@ func FindAll(collection *mongo.Collection) ([]Picture, error) {
 	// Passing bson.D{{}} as the filter matches all documents in the collection
 	cur, err := collection.Find(context.TODO(), bson.D{}, findOptions)
 	if err != nil {
-		return nil, err
+		log.Printf("[MONGO-DRIVER] : %v", err.Error())
+		return nil, errors.New("Error during MongoDB selection")
 	}
 
 	// Finding multiple documents returns a cursor
@@ -328,7 +342,8 @@ func FindAll(collection *mongo.Collection) ([]Picture, error) {
 		var elem Picture
 		err := cur.Decode(&elem)
 		if err != nil {
-			return nil, err
+			log.Printf("[DECODE] %v", err)
+			return nil, errors.New("Error while iterating results")
 		}
 
 		var result bson.D
@@ -341,7 +356,8 @@ func FindAll(collection *mongo.Collection) ([]Picture, error) {
 	}
 
 	if err := cur.Err(); err != nil {
-		return nil, err
+		log.Printf("[CURSOR] %v", err)
+		return nil, errors.New("Error while iterating results")
 	} else {
 		log.Printf("Found multiple documents : %+v\n", results)
 	}
@@ -360,7 +376,7 @@ func UpdateFlags(b []byte, collection *mongo.Collection) error {
 	var filter, update bson.D
 	err := json.Unmarshal(b, &modifications)
 	if err != nil {
-		return err
+		return errors.New("Could not unmarshal data")
 	}
 
 	for _, modif := range modifications {
@@ -372,7 +388,8 @@ func UpdateFlags(b []byte, collection *mongo.Collection) error {
 		}
 		updateResult, err := collection.UpdateOne(context.TODO(), filter, update)
 		if err != nil {
-			return err
+			log.Printf("[MONGO-DRIVER] : %v", err.Error())
+			return errors.New("Error during MongoDB update")
 		}
 
 		log.Printf("Matched %v documents and updated %v documents.\n", updateResult.MatchedCount, updateResult.ModifiedCount)
@@ -390,7 +407,7 @@ func UpdateValue(b []byte, collection *mongo.Collection, annotator string) error
 	var filter, update bson.D
 	err := json.Unmarshal(b, &annotations)
 	if err != nil {
-		return err
+		return errors.New("Could not unmarshal data")
 	}
 
 	log.Printf("Value : %v\n", annotations)
@@ -404,7 +421,8 @@ func UpdateValue(b []byte, collection *mongo.Collection, annotator string) error
 		}}}
 		updateResult, err := collection.UpdateOne(context.TODO(), filter, update)
 		if err != nil {
-			return err
+			log.Printf("[MONGO-DRIVER] : %v", err.Error())
+			return errors.New("Error during MongoDB update")
 		}
 		log.Printf("Matched %v documents and updated %v documents.\n", updateResult.MatchedCount, updateResult.ModifiedCount)
 	}
@@ -418,7 +436,8 @@ func UpdateValue(b []byte, collection *mongo.Collection, annotator string) error
 func DeleteAll(collection *mongo.Collection) error {
 	deleteResult, err := collection.DeleteMany(context.TODO(), bson.D{{}})
 	if err != nil {
-		return err
+		log.Printf("[MONGO-DRIVER] : %v", err.Error())
+		return errors.New("Error during MongoDB deletion")
 	}
 	log.Printf("Deleted %v documents in the trainers collection\n", deleteResult.DeletedCount)
 	return nil

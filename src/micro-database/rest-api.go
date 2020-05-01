@@ -47,7 +47,7 @@ func createEntry(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("[ERROR] : %v", err.Error())
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(fmt.Sprintf("[MICRO-DATABASE] %v", err.Error())))
+		w.Write([]byte("[MICRO-DATABASE] Could not read request"))
 		return
 	}
 
@@ -63,7 +63,7 @@ func createEntry(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("[ERROR] : %v", err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(fmt.Sprintf("[MICRO-DATABASE] %v", err.Error())))
+		w.Write([]byte("[MICRO-DATABASE] Could not marshal answer data"))
 		return
 	}
 
@@ -86,7 +86,7 @@ func selectById(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("[ERROR] : %v", err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(fmt.Sprintf("[MICRO-DATABASE] %v", err.Error())))
+		w.Write([]byte("[MICRO-DATABASE] Could not decode ID"))
 		return
 	}
 
@@ -97,9 +97,15 @@ func selectById(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(fmt.Sprintf("[MICRO-DATABASE] %v", err.Error())))
 		return
 	}
+	body, err := json.Marshal(entry)
+	if err != nil {
+		log.Printf("[ERROR] : %v", err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("[MICRO-DATABASE] Could not marshal answer data"))
+		return
+	}
 
 	w.Header().Set("Content-Type", "application/json")
-	body, _ := json.Marshal(entry)
 	w.WriteHeader(http.StatusOK)
 	w.Write(body)
 }
@@ -120,7 +126,7 @@ func newPageWithSuggestions(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("[ERROR] : %v", err.Error())
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(fmt.Sprintf("[MICRO-DATABASE] %v", err.Error())))
+		w.Write([]byte("[MICRO-DATABASE] Could not read specified amount"))
 	}
 
 	entry, err := FindManyWithSuggestion(amount, Database)
@@ -143,9 +149,15 @@ func newPageWithSuggestions(w http.ResponseWriter, r *http.Request) {
 			entry = append(entry, pic)
 		}
 	}
+	body, err := json.Marshal(entry)
+	if err != nil {
+		log.Printf("[ERROR] : %v", err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("[MICRO-DATABASE] Could not marshal answer data"))
+		return
+	}
 
 	w.Header().Set("Content-Type", "application/json")
-	body, _ := json.Marshal(entry)
 	w.WriteHeader(http.StatusOK)
 	w.Write(body)
 }
@@ -165,7 +177,7 @@ func newBatchForReco(w http.ResponseWriter, r *http.Request) {
 	if user.Role != lib_auth.RoleAdmin {
 		log.Printf("[WRONG_ROLE] Insufficient permission: want %v, was %v", lib_auth.RoleAdmin, user.Role)
 		w.WriteHeader(http.StatusUnauthorized)
-		w.Write([]byte("[MICRO-DATABASE] Insufficient permissions to export"))
+		w.Write([]byte("[MICRO-DATABASE] Insufficient permissions to launch recognizer"))
 		return
 	}
 
@@ -174,7 +186,7 @@ func newBatchForReco(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("[ERROR] : %v", err.Error())
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(fmt.Sprintf("[MICRO-DATABASE] %v", err.Error())))
+		w.Write([]byte("[MICRO-DATABASE] Could not read specified amount"))
 	}
 
 	entry, err := FindManyForSuggestion(amount, Database)
@@ -185,8 +197,15 @@ func newBatchForReco(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	body, err := json.Marshal(entry)
+	if err != nil {
+		log.Printf("[ERROR] : %v", err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("[MICRO-DATABASE] Could not marshal answer data"))
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json")
-	body, _ := json.Marshal(entry)
 	w.WriteHeader(http.StatusOK)
 	w.Write(body)
 }
@@ -200,8 +219,15 @@ func getAll(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	body, err := json.Marshal(entry)
+	if err != nil {
+		log.Printf("[ERROR] : %v", err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("[MICRO-DATABASE] Could not marshal answer data"))
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json")
-	body, _ := json.Marshal(entry)
 	w.WriteHeader(http.StatusOK)
 	w.Write(body)
 }
@@ -221,7 +247,7 @@ func updateFlags(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("[ERROR] : %v", err.Error())
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(fmt.Sprintf("[MICRO-DATABASE] %v", err.Error())))
+		w.Write([]byte("[MICRO-DATABASE] Could not read request"))
 		return
 	}
 
@@ -253,7 +279,7 @@ func updateValue(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("[ERROR] : %v", err.Error())
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(fmt.Sprintf("[MICRO-DATABASE] %v", err.Error())))
+		w.Write([]byte("[MICRO-DATABASE] Could not read request"))
 		return
 	}
 
@@ -286,7 +312,7 @@ func updateValueWithAnnotator(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("[ERROR] : %v", err.Error())
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(fmt.Sprintf("[MICRO-DATABASE] %v", err.Error())))
+		w.Write([]byte("[MICRO-DATABASE] Could not read request"))
 		return
 	}
 
@@ -327,7 +353,7 @@ func status(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("[ERROR] : %v", err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(fmt.Sprintf("[MICRO-DATABASE] %v", err.Error())))
+		w.Write([]byte("[MICRO-DATABASE] Error during MongoDB counting"))
 		return
 	}
 	res.Total = total
@@ -336,7 +362,7 @@ func status(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("[ERROR] : %v", err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(fmt.Sprintf("[MICRO-DATABASE] %v", err.Error())))
+		w.Write([]byte("[MICRO-DATABASE] Error during MongoDB counting"))
 		return
 	}
 	res.Annotated = annotated
@@ -345,12 +371,19 @@ func status(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("[ERROR] : %v", err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(fmt.Sprintf("[MICRO-DATABASE] %v", err.Error())))
+		w.Write([]byte("[MICRO-DATABASE] Error during MongoDB counting"))
 		return
 	}
 	res.Unreadable = unreadable
 
-	body, _ := json.Marshal(res)
+	body, err := json.Marshal(res)
+	if err != nil {
+		log.Printf("[ERROR] : %v", err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("[MICRO-DATABASE] Could not marshal answer data"))
+		return
+	}
+
 	w.WriteHeader(http.StatusOK)
 	w.Write(body)
 
@@ -371,7 +404,7 @@ func deleteAll(w http.ResponseWriter, r *http.Request) {
 	if user.Role != lib_auth.RoleAdmin {
 		log.Printf("[WRONG_ROLE] Insufficient permission: want %v, was %v", lib_auth.RoleAdmin, user.Role)
 		w.WriteHeader(http.StatusUnauthorized)
-		w.Write([]byte("[MICRO-DATABASE] Insufficient permissions to export"))
+		w.Write([]byte("[MICRO-DATABASE] Insufficient permissions to delete"))
 		return
 	}
 
