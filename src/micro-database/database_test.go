@@ -6,7 +6,9 @@ import (
 	"encoding/json"
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
+	lib_auth "github.com/taliesin-insa/lib-auth"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"net/http/httptest"
@@ -42,20 +44,68 @@ var EmptyPiFF = PiFFStruct{
 	Parent:   0,
 }
 
+// for mockedAuthServer
+type VerifyRequest struct {
+	Token string
+}
+
 func TestMain(m *testing.M) {
-	errSetup := setup()
+	// fake server to replace the authentication call (in lib_auth)
+	mockedAuthServer := httptest.NewServer(
+		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if r.URL.Path == "/auth/verifyToken" {
+				reqBody, err := ioutil.ReadAll(r.Body)
+				if err != nil {
+					log.Printf("[TEST_ERROR] Create authentication mocked server (read body): %v", err.Error())
+					panic(m)
+				}
+
+				var reqData VerifyRequest
+				err = json.Unmarshal(reqBody, &reqData)
+				if err != nil {
+					log.Printf("[TEST_ERROR] Create authentication mocked server (unmarsal body): %v", err.Error())
+					panic(m)
+				}
+
+				var result []byte
+				if reqData.Token == "admin_token" {
+					result, err = json.Marshal(lib_auth.UserData{Username: "morpheus", Role: lib_auth.RoleAdmin})
+				} else {
+					result, err = json.Marshal(lib_auth.UserData{Username: "morpheus", Role: lib_auth.RoleAnnotator})
+				}
+
+				if err != nil {
+					log.Printf("[TEST_ERROR] Create authentication mocked server (marshal result): %v", err.Error())
+					panic(m)
+				}
+
+				w.WriteHeader(http.StatusOK)
+				w.Write(result)
+			}
+		}))
+
+	// replace the redirect to authentication microservice
+	previousAuthUrl := os.Getenv("AUTH_API_URL")
+	os.Setenv("AUTH_API_URL", mockedAuthServer.URL)
+
+	errSetup := setupDB()
 	if errSetup != nil {
 		log.Println("Could not drop database on test start")
 	}
+
 	code := m.Run()
+
 	errShutdown := shutdown()
 	if errShutdown != nil {
 		log.Println("Could not drop database on test end")
 	}
+
+	os.Setenv("AUTH_API_URL", previousAuthUrl)
+
 	os.Exit(code)
 }
 
-func setup() error {
+func setupDB() error {
 	database := Client.Database("taliesin_test")
 	err := database.Drop(context.TODO())
 	if err != nil {
