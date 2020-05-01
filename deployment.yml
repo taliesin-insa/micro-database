@@ -31,6 +31,8 @@ spec:
           env:
             - name: MICRO_ENVIRONMENT
               value: "production"
+            - name: AUTH_API_URL
+              value: "http://auth-api.gitlab-managed-apps.svc.cluster.local:8080"
       volumes:
         - name: file-server
           persistentVolumeClaim:
@@ -70,6 +72,8 @@ spec:
           env:
             - name: MICRO_ENVIRONMENT
               value: "dev"
+            - name: AUTH_API_URL
+              value: "http://auth-dev-api.gitlab-managed-apps.svc.cluster.local:8080"
       volumes:
         - name: file-server-dev
           persistentVolumeClaim:
