@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/gorilla/mux"
+	lib_auth "github.com/taliesin-insa/lib-auth"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
@@ -12,8 +14,6 @@ import (
 	"net/http"
 	"strconv"
 	"time"
-
-	"github.com/gorilla/mux"
 )
 
 var Database *mongo.Collection
@@ -33,6 +33,16 @@ func homeLink(w http.ResponseWriter, r *http.Request) {
 }
 
 func createEntry(w http.ResponseWriter, r *http.Request) {
+	_, err, authStatusCode := lib_auth.AuthenticateUser(r)
+
+	// check if there was an error during the authentication or if the user wasn't authenticated
+	if err != nil {
+		log.Printf("[ERROR] Check authentication: %v", err.Error())
+		w.WriteHeader(authStatusCode)
+		w.Write([]byte("[MICRO-DATABASE] Couldn't verify identity"))
+		return
+	}
+
 	reqBody, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		log.Printf("[ERROR] : %v", err.Error())
@@ -62,6 +72,16 @@ func createEntry(w http.ResponseWriter, r *http.Request) {
 }
 
 func selectById(w http.ResponseWriter, r *http.Request) {
+	_, err, authStatusCode := lib_auth.AuthenticateUser(r)
+
+	// check if there was an error during the authentication or if the user wasn't authenticated
+	if err != nil {
+		log.Printf("[ERROR] Check authentication: %v", err.Error())
+		w.WriteHeader(authStatusCode)
+		w.Write([]byte("[MICRO-DATABASE] Couldn't verify identity"))
+		return
+	}
+
 	entryId, err := primitive.ObjectIDFromHex(mux.Vars(r)["id"])
 	if err != nil {
 		log.Printf("[ERROR] : %v", err.Error())
@@ -85,6 +105,16 @@ func selectById(w http.ResponseWriter, r *http.Request) {
 }
 
 func newPageWithSuggestions(w http.ResponseWriter, r *http.Request) {
+	_, err, authStatusCode := lib_auth.AuthenticateUser(r)
+
+	// check if there was an error during the authentication or if the user wasn't authenticated
+	if err != nil {
+		log.Printf("[ERROR] Check authentication: %v", err.Error())
+		w.WriteHeader(authStatusCode)
+		w.Write([]byte("[MICRO-DATABASE] Couldn't verify identity"))
+		return
+	}
+
 	entryAmnt := mux.Vars(r)["amount"]
 	amount, err := strconv.Atoi(entryAmnt)
 	if err != nil {
@@ -121,6 +151,24 @@ func newPageWithSuggestions(w http.ResponseWriter, r *http.Request) {
 }
 
 func newBatchForReco(w http.ResponseWriter, r *http.Request) {
+	user, err, authStatusCode := lib_auth.AuthenticateUser(r)
+
+	// check if there was an error during the authentication or if the user wasn't authenticated
+	if err != nil {
+		log.Printf("[ERROR] Check authentication: %v", err.Error())
+		w.WriteHeader(authStatusCode)
+		w.Write([]byte("[MICRO-DATABASE] Couldn't verify identity"))
+		return
+	}
+
+	// check if the authenticated user has sufficient permissions to
+	if user.Role != lib_auth.RoleAdmin {
+		log.Printf("[WRONG_ROLE] Insufficient permission: want %v, was %v", lib_auth.RoleAdmin, user.Role)
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write([]byte("[MICRO-DATABASE] Insufficient permissions to export"))
+		return
+	}
+
 	entryAmnt := mux.Vars(r)["amount"]
 	amount, err := strconv.Atoi(entryAmnt)
 	if err != nil {
@@ -159,6 +207,16 @@ func getAll(w http.ResponseWriter, r *http.Request) {
 }
 
 func updateFlags(w http.ResponseWriter, r *http.Request) {
+	_, err, authStatusCode := lib_auth.AuthenticateUser(r)
+
+	// check if there was an error during the authentication or if the user wasn't authenticated
+	if err != nil {
+		log.Printf("[ERROR] Check authentication: %v", err.Error())
+		w.WriteHeader(authStatusCode)
+		w.Write([]byte("[MICRO-DATABASE] Couldn't verify identity"))
+		return
+	}
+
 	reqBody, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		log.Printf("[ERROR] : %v", err.Error())
@@ -179,6 +237,16 @@ func updateFlags(w http.ResponseWriter, r *http.Request) {
 }
 
 func updateValue(w http.ResponseWriter, r *http.Request) {
+	_, err, authStatusCode := lib_auth.AuthenticateUser(r)
+
+	// check if there was an error during the authentication or if the user wasn't authenticated
+	if err != nil {
+		log.Printf("[ERROR] Check authentication: %v", err.Error())
+		w.WriteHeader(authStatusCode)
+		w.Write([]byte("[MICRO-DATABASE] Couldn't verify identity"))
+		return
+	}
+
 	log.Println("Update value : ")
 
 	reqBody, err := ioutil.ReadAll(r.Body)
@@ -201,6 +269,16 @@ func updateValue(w http.ResponseWriter, r *http.Request) {
 }
 
 func updateValueWithAnnotator(w http.ResponseWriter, r *http.Request) {
+	_, err, authStatusCode := lib_auth.AuthenticateUser(r)
+
+	// check if there was an error during the authentication or if the user wasn't authenticated
+	if err != nil {
+		log.Printf("[ERROR] Check authentication: %v", err.Error())
+		w.WriteHeader(authStatusCode)
+		w.Write([]byte("[MICRO-DATABASE] Couldn't verify identity"))
+		return
+	}
+
 	annotator := mux.Vars(r)["annotator"]
 	log.Println("Update value by " + annotator + " : ")
 
@@ -224,9 +302,19 @@ func updateValueWithAnnotator(w http.ResponseWriter, r *http.Request) {
 }
 
 func status(w http.ResponseWriter, r *http.Request) {
+	_, err, authStatusCode := lib_auth.AuthenticateUser(r)
+
+	// check if there was an error during the authentication or if the user wasn't authenticated
+	if err != nil {
+		log.Printf("[ERROR] Check authentication: %v", err.Error())
+		w.WriteHeader(authStatusCode)
+		w.Write([]byte("[MICRO-DATABASE] Couldn't verify identity"))
+		return
+	}
+
 	ctx, _ := context.WithTimeout(context.Background(), 3*time.Second)
 	res := new(Status)
-	err := Client.Ping(ctx, readpref.Primary())
+	err = Client.Ping(ctx, readpref.Primary())
 	if err != nil {
 		log.Printf("[ERROR] : %v", err.Error())
 		w.Write([]byte("{ 'isDBUp': false }"))
@@ -269,7 +357,25 @@ func status(w http.ResponseWriter, r *http.Request) {
 }
 
 func deleteAll(w http.ResponseWriter, r *http.Request) {
-	err := DeleteAll(Database)
+	user, err, authStatusCode := lib_auth.AuthenticateUser(r)
+
+	// check if there was an error during the authentication or if the user wasn't authenticated
+	if err != nil {
+		log.Printf("[ERROR] Check authentication: %v", err.Error())
+		w.WriteHeader(authStatusCode)
+		w.Write([]byte("[MICRO-DATABASE] Couldn't verify identity"))
+		return
+	}
+
+	// check if the authenticated user has sufficient permissions to
+	if user.Role != lib_auth.RoleAdmin {
+		log.Printf("[WRONG_ROLE] Insufficient permission: want %v, was %v", lib_auth.RoleAdmin, user.Role)
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write([]byte("[MICRO-DATABASE] Insufficient permissions to export"))
+		return
+	}
+
+	err = DeleteAll(Database)
 	if err != nil {
 		log.Printf("[ERROR] : %v", err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
