@@ -4,16 +4,17 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/gorilla/mux"
+	lib_auth "github.com/taliesin-insa/lib-auth"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"strconv"
 	"time"
-
-	"github.com/gorilla/mux"
 )
 
 var Database *mongo.Collection
@@ -33,11 +34,21 @@ func homeLink(w http.ResponseWriter, r *http.Request) {
 }
 
 func createEntry(w http.ResponseWriter, r *http.Request) {
+	_, err, authStatusCode := lib_auth.AuthenticateUser(r)
+
+	// check if there was an error during the authentication or if the user wasn't authenticated
+	if err != nil {
+		log.Printf("[ERROR] Check authentication: %v", err.Error())
+		w.WriteHeader(authStatusCode)
+		w.Write([]byte("[MICRO-DATABASE] Couldn't verify identity"))
+		return
+	}
+
 	reqBody, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		log.Printf("[ERROR] : %v", err.Error())
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(fmt.Sprintf("[MICRO-DATABASE] %v", err.Error())))
+		w.Write([]byte("[MICRO-DATABASE] Could not read request"))
 		return
 	}
 
@@ -53,7 +64,7 @@ func createEntry(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("[ERROR] : %v", err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(fmt.Sprintf("[MICRO-DATABASE] %v", err.Error())))
+		w.Write([]byte("[MICRO-DATABASE] Could not marshal answer data"))
 		return
 	}
 
@@ -62,11 +73,21 @@ func createEntry(w http.ResponseWriter, r *http.Request) {
 }
 
 func selectById(w http.ResponseWriter, r *http.Request) {
+	_, err, authStatusCode := lib_auth.AuthenticateUser(r)
+
+	// check if there was an error during the authentication or if the user wasn't authenticated
+	if err != nil {
+		log.Printf("[ERROR] Check authentication: %v", err.Error())
+		w.WriteHeader(authStatusCode)
+		w.Write([]byte("[MICRO-DATABASE] Couldn't verify identity"))
+		return
+	}
+
 	entryId, err := primitive.ObjectIDFromHex(mux.Vars(r)["id"])
 	if err != nil {
 		log.Printf("[ERROR] : %v", err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(fmt.Sprintf("[MICRO-DATABASE] %v", err.Error())))
+		w.Write([]byte("[MICRO-DATABASE] Could not decode ID"))
 		return
 	}
 
@@ -77,20 +98,36 @@ func selectById(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(fmt.Sprintf("[MICRO-DATABASE] %v", err.Error())))
 		return
 	}
+	body, err := json.Marshal(entry)
+	if err != nil {
+		log.Printf("[ERROR] : %v", err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("[MICRO-DATABASE] Could not marshal answer data"))
+		return
+	}
 
 	w.Header().Set("Content-Type", "application/json")
-	body, _ := json.Marshal(entry)
 	w.WriteHeader(http.StatusOK)
 	w.Write(body)
 }
 
 func newPageWithSuggestions(w http.ResponseWriter, r *http.Request) {
+	_, err, authStatusCode := lib_auth.AuthenticateUser(r)
+
+	// check if there was an error during the authentication or if the user wasn't authenticated
+	if err != nil {
+		log.Printf("[ERROR] Check authentication: %v", err.Error())
+		w.WriteHeader(authStatusCode)
+		w.Write([]byte("[MICRO-DATABASE] Couldn't verify identity"))
+		return
+	}
+
 	entryAmnt := mux.Vars(r)["amount"]
 	amount, err := strconv.Atoi(entryAmnt)
 	if err != nil {
 		log.Printf("[ERROR] : %v", err.Error())
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(fmt.Sprintf("[MICRO-DATABASE] %v", err.Error())))
+		w.Write([]byte("[MICRO-DATABASE] Could not read specified amount"))
 	}
 
 	entry, err := FindManyWithSuggestion(amount, Database)
@@ -113,20 +150,37 @@ func newPageWithSuggestions(w http.ResponseWriter, r *http.Request) {
 			entry = append(entry, pic)
 		}
 	}
+	body, err := json.Marshal(entry)
+	if err != nil {
+		log.Printf("[ERROR] : %v", err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("[MICRO-DATABASE] Could not marshal answer data"))
+		return
+	}
 
 	w.Header().Set("Content-Type", "application/json")
-	body, _ := json.Marshal(entry)
 	w.WriteHeader(http.StatusOK)
 	w.Write(body)
 }
 
 func newBatchForReco(w http.ResponseWriter, r *http.Request) {
+	password := r.Header.Get("Authorization")
+	expectedPassword := os.Getenv("CLUSTER_INTERNAL_PASSWORD")
+
+	if password != expectedPassword {
+		log.Printf("[ERROR] : Wrong password, expected %v but got %v", expectedPassword, password)
+		w.WriteHeader(http.StatusForbidden)
+		w.Write([]byte("[MICRO-DATABASE] Recognizer didn't have correct password"))
+		return
+	}
+
 	entryAmnt := mux.Vars(r)["amount"]
 	amount, err := strconv.Atoi(entryAmnt)
 	if err != nil {
 		log.Printf("[ERROR] : %v", err.Error())
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(fmt.Sprintf("[MICRO-DATABASE] %v", err.Error())))
+		w.Write([]byte("[MICRO-DATABASE] Could not read specified amount"))
+		return
 	}
 
 	entry, err := FindManyForSuggestion(amount, Database)
@@ -137,13 +191,38 @@ func newBatchForReco(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	body, err := json.Marshal(entry)
+	if err != nil {
+		log.Printf("[ERROR] : %v", err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("[MICRO-DATABASE] Could not marshal answer data"))
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json")
-	body, _ := json.Marshal(entry)
 	w.WriteHeader(http.StatusOK)
 	w.Write(body)
 }
 
 func getAll(w http.ResponseWriter, r *http.Request) {
+	user, err, authStatusCode := lib_auth.AuthenticateUser(r)
+
+	// check if there was an error during the authentication or if the user wasn't authenticated
+	if err != nil {
+		log.Printf("[ERROR] Check authentication: %v", err.Error())
+		w.WriteHeader(authStatusCode)
+		w.Write([]byte("[MICRO-DATABASE] Couldn't verify identity"))
+		return
+	}
+
+	// check if the authenticated user has sufficient permissions to
+	if user.Role != lib_auth.RoleAdmin {
+		log.Printf("[WRONG_ROLE] Insufficient permission: want %v, was %v", lib_auth.RoleAdmin, user.Role)
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write([]byte("[MICRO-DATABASE] Insufficient permissions to delete"))
+		return
+	}
+
 	entry, err := FindAll(Database)
 	if err != nil {
 		log.Printf("[ERROR] : %v", err.Error())
@@ -152,18 +231,35 @@ func getAll(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	body, err := json.Marshal(entry)
+	if err != nil {
+		log.Printf("[ERROR] : %v", err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("[MICRO-DATABASE] Could not marshal answer data"))
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json")
-	body, _ := json.Marshal(entry)
 	w.WriteHeader(http.StatusOK)
 	w.Write(body)
 }
 
 func updateFlags(w http.ResponseWriter, r *http.Request) {
+	_, err, authStatusCode := lib_auth.AuthenticateUser(r)
+
+	// check if there was an error during the authentication or if the user wasn't authenticated
+	if err != nil {
+		log.Printf("[ERROR] Check authentication: %v", err.Error())
+		w.WriteHeader(authStatusCode)
+		w.Write([]byte("[MICRO-DATABASE] Couldn't verify identity"))
+		return
+	}
+
 	reqBody, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		log.Printf("[ERROR] : %v", err.Error())
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(fmt.Sprintf("[MICRO-DATABASE] %v", err.Error())))
+		w.Write([]byte("[MICRO-DATABASE] Could not read request"))
 		return
 	}
 
@@ -179,13 +275,28 @@ func updateFlags(w http.ResponseWriter, r *http.Request) {
 }
 
 func updateValue(w http.ResponseWriter, r *http.Request) {
+	password := r.Header.Get("Authorization")
+	expectedPassword := os.Getenv("CLUSTER_INTERNAL_PASSWORD")
+
+	if password != expectedPassword {
+		_, err, authStatusCode := lib_auth.AuthenticateUser(r)
+
+		// check if there was an error during the authentication or if the user wasn't authenticated
+		if err != nil {
+			log.Printf("[ERROR] Check authentication: %v", err.Error())
+			w.WriteHeader(authStatusCode)
+			w.Write([]byte("[MICRO-DATABASE] Couldn't verify identity"))
+			return
+		}
+	}
+
 	log.Println("Update value : ")
 
 	reqBody, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		log.Printf("[ERROR] : %v", err.Error())
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(fmt.Sprintf("[MICRO-DATABASE] %v", err.Error())))
+		w.Write([]byte("[MICRO-DATABASE] Could not read request"))
 		return
 	}
 
@@ -201,6 +312,16 @@ func updateValue(w http.ResponseWriter, r *http.Request) {
 }
 
 func updateValueWithAnnotator(w http.ResponseWriter, r *http.Request) {
+	_, err, authStatusCode := lib_auth.AuthenticateUser(r)
+
+	// check if there was an error during the authentication or if the user wasn't authenticated
+	if err != nil {
+		log.Printf("[ERROR] Check authentication: %v", err.Error())
+		w.WriteHeader(authStatusCode)
+		w.Write([]byte("[MICRO-DATABASE] Couldn't verify identity"))
+		return
+	}
+
 	annotator := mux.Vars(r)["annotator"]
 	log.Println("Update value by " + annotator + " : ")
 
@@ -208,7 +329,7 @@ func updateValueWithAnnotator(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("[ERROR] : %v", err.Error())
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(fmt.Sprintf("[MICRO-DATABASE] %v", err.Error())))
+		w.Write([]byte("[MICRO-DATABASE] Could not read request"))
 		return
 	}
 
@@ -224,9 +345,19 @@ func updateValueWithAnnotator(w http.ResponseWriter, r *http.Request) {
 }
 
 func status(w http.ResponseWriter, r *http.Request) {
+	_, err, authStatusCode := lib_auth.AuthenticateUser(r)
+
+	// check if there was an error during the authentication or if the user wasn't authenticated
+	if err != nil {
+		log.Printf("[ERROR] Check authentication: %v", err.Error())
+		w.WriteHeader(authStatusCode)
+		w.Write([]byte("[MICRO-DATABASE] Couldn't verify identity"))
+		return
+	}
+
 	ctx, _ := context.WithTimeout(context.Background(), 3*time.Second)
 	res := new(Status)
-	err := Client.Ping(ctx, readpref.Primary())
+	err = Client.Ping(ctx, readpref.Primary())
 	if err != nil {
 		log.Printf("[ERROR] : %v", err.Error())
 		w.Write([]byte("{ 'isDBUp': false }"))
@@ -239,7 +370,7 @@ func status(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("[ERROR] : %v", err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(fmt.Sprintf("[MICRO-DATABASE] %v", err.Error())))
+		w.Write([]byte("[MICRO-DATABASE] Error during MongoDB counting"))
 		return
 	}
 	res.Total = total
@@ -248,7 +379,7 @@ func status(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("[ERROR] : %v", err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(fmt.Sprintf("[MICRO-DATABASE] %v", err.Error())))
+		w.Write([]byte("[MICRO-DATABASE] Error during MongoDB counting"))
 		return
 	}
 	res.Annotated = annotated
@@ -257,19 +388,44 @@ func status(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("[ERROR] : %v", err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(fmt.Sprintf("[MICRO-DATABASE] %v", err.Error())))
+		w.Write([]byte("[MICRO-DATABASE] Error during MongoDB counting"))
 		return
 	}
 	res.Unreadable = unreadable
 
-	body, _ := json.Marshal(res)
+	body, err := json.Marshal(res)
+	if err != nil {
+		log.Printf("[ERROR] : %v", err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("[MICRO-DATABASE] Could not marshal answer data"))
+		return
+	}
+
 	w.WriteHeader(http.StatusOK)
 	w.Write(body)
 
 }
 
 func deleteAll(w http.ResponseWriter, r *http.Request) {
-	err := DeleteAll(Database)
+	user, err, authStatusCode := lib_auth.AuthenticateUser(r)
+
+	// check if there was an error during the authentication or if the user wasn't authenticated
+	if err != nil {
+		log.Printf("[ERROR] Check authentication: %v", err.Error())
+		w.WriteHeader(authStatusCode)
+		w.Write([]byte("[MICRO-DATABASE] Couldn't verify identity"))
+		return
+	}
+
+	// check if the authenticated user has sufficient permissions to
+	if user.Role != lib_auth.RoleAdmin {
+		log.Printf("[WRONG_ROLE] Insufficient permission: want %v, was %v", lib_auth.RoleAdmin, user.Role)
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write([]byte("[MICRO-DATABASE] Insufficient permissions to delete"))
+		return
+	}
+
+	err = DeleteAll(Database)
 	if err != nil {
 		log.Printf("[ERROR] : %v", err.Error())
 		w.WriteHeader(http.StatusInternalServerError)

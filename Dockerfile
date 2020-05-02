@@ -34,6 +34,8 @@ RUN go get -u github.com/gorilla/mux
 RUN go get -u go.mongodb.org/mongo-driver/bson
 RUN go get -u go.mongodb.org/mongo-driver/mongo
 RUN go get -u go.mongodb.org/mongo-driver/mongo/options
+RUN go get -u github.com/taliesin-insa/lib-auth
+
 
 # Build all project statically (prevent some exec user process caused "no such file or directory" error)
 ENV CGO_ENABLED=0
