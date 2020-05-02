@@ -205,6 +205,16 @@ func newBatchForReco(w http.ResponseWriter, r *http.Request) {
 }
 
 func getAll(w http.ResponseWriter, r *http.Request) {
+	_, err, authStatusCode := lib_auth.AuthenticateUser(r)
+
+	// check if there was an error during the authentication or if the user wasn't authenticated
+	if err != nil {
+		log.Printf("[ERROR] Check authentication: %v", err.Error())
+		w.WriteHeader(authStatusCode)
+		w.Write([]byte("[MICRO-DATABASE] Couldn't verify identity"))
+		return
+	}
+
 	entry, err := FindAll(Database)
 	if err != nil {
 		log.Printf("[ERROR] : %v", err.Error())
