@@ -33,6 +33,11 @@ spec:
               value: "production"
             - name: AUTH_API_URL
               value: "http://auth-api.gitlab-managed-apps.svc.cluster.local:8080"
+            - name: CLUSTER_INTERNAL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: database-secrets
+                  key: password
       volumes:
         - name: file-server
           persistentVolumeClaim:
@@ -74,6 +79,11 @@ spec:
               value: "dev"
             - name: AUTH_API_URL
               value: "http://auth-dev-api.gitlab-managed-apps.svc.cluster.local:8080"
+            - name: CLUSTER_INTERNAL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: database-secrets
+                  key: password
       volumes:
         - name: file-server-dev
           persistentVolumeClaim:

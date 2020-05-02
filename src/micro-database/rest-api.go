@@ -12,6 +12,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"strconv"
 	"time"
 )
@@ -163,23 +164,15 @@ func newPageWithSuggestions(w http.ResponseWriter, r *http.Request) {
 }
 
 func newBatchForReco(w http.ResponseWriter, r *http.Request) {
-	//user, err, authStatusCode := lib_auth.AuthenticateUser(r)
-	//
-	//// check if there was an error during the authentication or if the user wasn't authenticated
-	//if err != nil {
-	//	log.Printf("[ERROR] Check authentication: %v", err.Error())
-	//	w.WriteHeader(authStatusCode)
-	//	w.Write([]byte("[MICRO-DATABASE] Couldn't verify identity"))
-	//	return
-	//}
-	//
-	//// check if the authenticated user has sufficient permissions to
-	//if user.Role != lib_auth.RoleAdmin {
-	//	log.Printf("[WRONG_ROLE] Insufficient permission: want %v, was %v", lib_auth.RoleAdmin, user.Role)
-	//	w.WriteHeader(http.StatusUnauthorized)
-	//	w.Write([]byte("[MICRO-DATABASE] Insufficient permissions to launch recognizer"))
-	//	return
-	//}
+	password := r.Header.Get("Authorize")
+	expectedPassword := os.Getenv("CLUSTER_INTERNAL_PASSWORD")
+
+	if password != expectedPassword {
+		log.Printf("[ERROR] : Wrong password, expected %v but got %v", expectedPassword, password)
+		w.WriteHeader(http.StatusForbidden)
+		w.Write([]byte("[MICRO-DATABASE] Recognizer didn't have correct password"))
+		return
+	}
 
 	entryAmnt := mux.Vars(r)["amount"]
 	amount, err := strconv.Atoi(entryAmnt)
@@ -187,6 +180,7 @@ func newBatchForReco(w http.ResponseWriter, r *http.Request) {
 		log.Printf("[ERROR] : %v", err.Error())
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte("[MICRO-DATABASE] Could not read specified amount"))
+		return
 	}
 
 	entry, err := FindManyForSuggestion(amount, Database)
