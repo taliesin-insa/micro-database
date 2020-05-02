@@ -164,7 +164,7 @@ func newPageWithSuggestions(w http.ResponseWriter, r *http.Request) {
 }
 
 func newBatchForReco(w http.ResponseWriter, r *http.Request) {
-	password := r.Header.Get("Authorize")
+	password := r.Header.Get("Authorization")
 	expectedPassword := os.Getenv("CLUSTER_INTERNAL_PASSWORD")
 
 	if password != expectedPassword {
@@ -257,14 +257,19 @@ func updateFlags(w http.ResponseWriter, r *http.Request) {
 }
 
 func updateValue(w http.ResponseWriter, r *http.Request) {
-	_, err, authStatusCode := lib_auth.AuthenticateUser(r)
+	password := r.Header.Get("Authorization")
+	expectedPassword := os.Getenv("CLUSTER_INTERNAL_PASSWORD")
 
-	// check if there was an error during the authentication or if the user wasn't authenticated
-	if err != nil {
-		log.Printf("[ERROR] Check authentication: %v", err.Error())
-		w.WriteHeader(authStatusCode)
-		w.Write([]byte("[MICRO-DATABASE] Couldn't verify identity"))
-		return
+	if password != expectedPassword {
+		_, err, authStatusCode := lib_auth.AuthenticateUser(r)
+
+		// check if there was an error during the authentication or if the user wasn't authenticated
+		if err != nil {
+			log.Printf("[ERROR] Check authentication: %v", err.Error())
+			w.WriteHeader(authStatusCode)
+			w.Write([]byte("[MICRO-DATABASE] Couldn't verify identity"))
+			return
+		}
 	}
 
 	log.Println("Update value : ")
