@@ -205,13 +205,21 @@ func newBatchForReco(w http.ResponseWriter, r *http.Request) {
 }
 
 func getAll(w http.ResponseWriter, r *http.Request) {
-	_, err, authStatusCode := lib_auth.AuthenticateUser(r)
+	user, err, authStatusCode := lib_auth.AuthenticateUser(r)
 
 	// check if there was an error during the authentication or if the user wasn't authenticated
 	if err != nil {
 		log.Printf("[ERROR] Check authentication: %v", err.Error())
 		w.WriteHeader(authStatusCode)
 		w.Write([]byte("[MICRO-DATABASE] Couldn't verify identity"))
+		return
+	}
+
+	// check if the authenticated user has sufficient permissions to
+	if user.Role != lib_auth.RoleAdmin {
+		log.Printf("[WRONG_ROLE] Insufficient permission: want %v, was %v", lib_auth.RoleAdmin, user.Role)
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write([]byte("[MICRO-DATABASE] Insufficient permissions to delete"))
 		return
 	}
 
