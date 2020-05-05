@@ -43,6 +43,7 @@ test:
     - cd src/${CI_PROJECT_NAME}
     - apk add --no-cache curl git
     - go get -d ./...
+    - export CGO_ENABLED=0
     - go test --cover -v
 
 production:
