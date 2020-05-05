@@ -38,6 +38,9 @@ spec:
                 secretKeyRef:
                   name: database-secrets
                   key: password
+          resources:
+            requests:
+              cpu: "250m"
       volumes:
         - name: file-server
           persistentVolumeClaim:
@@ -84,6 +87,9 @@ spec:
                 secretKeyRef:
                   name: database-secrets
                   key: password
+          resources:
+            requests:
+              cpu: "250m"
       volumes:
         - name: file-server-dev
           persistentVolumeClaim:

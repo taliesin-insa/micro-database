@@ -33,7 +33,7 @@ dev:
     - kubectl config set-context default --cluster=k8s --user=gitlab
     - kubectl config use-context default
     - kubectl apply -f ci/
-    - kubectl set image deployment/database-dev database-dev=${CONTAINER_IMAGE_SHA} --record -n gitlab-managed-apps
+    - kubectl rollout restart deployment/database-dev -n gitlab-managed-apps
 
 test:
   stage: test
@@ -60,4 +60,4 @@ production:
     - kubectl config set-context default --cluster=k8s --user=gitlab
     - kubectl config use-context default
     - kubectl apply -f ci/
-    - kubectl set image deployment/database database=${CONTAINER_IMAGE_SHA} --record -n gitlab-managed-apps
+    - kubectl rollout restart deployment/database -n gitlab-managed-apps
