@@ -83,6 +83,9 @@ func Connect() *mongo.Client {
 	} else if os.Getenv("MICRO_ENVIRONMENT") == "dev" {
 		URI = "mongodb://pinky.local:27017/"
 		log.Println("Started in dev environment.")
+	} else if os.Getenv("MICRO_ENVIRONMENT") == "test" {
+		URI = "mongodb://pinky.local:27017/"
+		log.Println("Started in test environment.")
 	} else {
 		URI = "mongodb://localhost:27017/"
 		log.Println("Started in local environment.")

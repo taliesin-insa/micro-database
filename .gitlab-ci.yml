@@ -44,6 +44,7 @@ test:
     - apk add --no-cache curl git
     - go get -d ./...
     - export CGO_ENABLED=0
+    - export MICRO_ENVIRONMENT="test"
     - go test --cover -v
 
 production:
