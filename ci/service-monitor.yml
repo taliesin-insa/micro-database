@@ -1,0 +1,31 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: database
+  namespace: gitlab-managed-apps
+  labels:
+    prometheus: k8s
+spec:
+  namespaceSelector:
+    any: true
+  selector:
+    matchLabels:
+      app: database
+  endpoints:
+    - port: api
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: database-dev
+  namespace: gitlab-managed-apps
+  labels:
+    prometheus: k8s
+spec:
+  namespaceSelector:
+    any: true
+  selector:
+    matchLabels:
+      app: database-dev
+  endpoints:
+  - port: api

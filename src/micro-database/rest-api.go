@@ -5,6 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gorilla/mux"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	lib_auth "github.com/taliesin-insa/lib-auth"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -20,6 +23,13 @@ import (
 var Database *mongo.Collection
 var Client = Connect()
 
+var (
+	httpRequestsTotal = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "http_requests_total",
+		Help: "Number of HTTP requests processed by the microservice",
+	})
+)
+
 type Status struct {
 	DbUp       bool  `json:"isDBUp"`
 	Total      int64 `json:"total"`
@@ -28,12 +38,15 @@ type Status struct {
 }
 
 func homeLink(w http.ResponseWriter, r *http.Request) {
+	httpRequestsTotal.Inc() // incrementing the httpRequestsTotal counter
 	log.Printf("Homelink Joined")
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("[MICRO-DATABASE] Homelink Joined"))
 }
 
 func createEntry(w http.ResponseWriter, r *http.Request) {
+	httpRequestsTotal.Inc() // incrementing the httpRequestsTotal counter
+
 	_, err, authStatusCode := lib_auth.AuthenticateUser(r)
 
 	// check if there was an error during the authentication or if the user wasn't authenticated
@@ -73,6 +86,8 @@ func createEntry(w http.ResponseWriter, r *http.Request) {
 }
 
 func selectById(w http.ResponseWriter, r *http.Request) {
+	httpRequestsTotal.Inc() // incrementing the httpRequestsTotal counter
+
 	_, err, authStatusCode := lib_auth.AuthenticateUser(r)
 
 	// check if there was an error during the authentication or if the user wasn't authenticated
@@ -112,6 +127,8 @@ func selectById(w http.ResponseWriter, r *http.Request) {
 }
 
 func newPageWithSuggestions(w http.ResponseWriter, r *http.Request) {
+	httpRequestsTotal.Inc() // incrementing the httpRequestsTotal counter
+
 	_, err, authStatusCode := lib_auth.AuthenticateUser(r)
 
 	// check if there was an error during the authentication or if the user wasn't authenticated
@@ -164,6 +181,8 @@ func newPageWithSuggestions(w http.ResponseWriter, r *http.Request) {
 }
 
 func newBatchForReco(w http.ResponseWriter, r *http.Request) {
+	httpRequestsTotal.Inc() // incrementing the httpRequestsTotal counter
+
 	password := r.Header.Get("Authorization")
 	expectedPassword := os.Getenv("CLUSTER_INTERNAL_PASSWORD")
 
@@ -205,6 +224,8 @@ func newBatchForReco(w http.ResponseWriter, r *http.Request) {
 }
 
 func getAll(w http.ResponseWriter, r *http.Request) {
+	httpRequestsTotal.Inc() // incrementing the httpRequestsTotal counter
+
 	user, err, authStatusCode := lib_auth.AuthenticateUser(r)
 
 	// check if there was an error during the authentication or if the user wasn't authenticated
@@ -245,6 +266,8 @@ func getAll(w http.ResponseWriter, r *http.Request) {
 }
 
 func updateFlags(w http.ResponseWriter, r *http.Request) {
+	httpRequestsTotal.Inc() // incrementing the httpRequestsTotal counter
+
 	_, err, authStatusCode := lib_auth.AuthenticateUser(r)
 
 	// check if there was an error during the authentication or if the user wasn't authenticated
@@ -275,6 +298,8 @@ func updateFlags(w http.ResponseWriter, r *http.Request) {
 }
 
 func updateValue(w http.ResponseWriter, r *http.Request) {
+	httpRequestsTotal.Inc() // incrementing the httpRequestsTotal counter
+
 	_, err, authStatusCode := lib_auth.AuthenticateUser(r)
 
 	// check if there was an error during the authentication or if the user wasn't authenticated
@@ -307,6 +332,8 @@ func updateValue(w http.ResponseWriter, r *http.Request) {
 }
 
 func updateValueWithAnnotator(w http.ResponseWriter, r *http.Request) {
+	httpRequestsTotal.Inc() // incrementing the httpRequestsTotal counter
+
 	password := r.Header.Get("Authorization")
 	expectedPassword := os.Getenv("CLUSTER_INTERNAL_PASSWORD")
 
@@ -345,6 +372,8 @@ func updateValueWithAnnotator(w http.ResponseWriter, r *http.Request) {
 }
 
 func status(w http.ResponseWriter, r *http.Request) {
+	httpRequestsTotal.Inc() // incrementing the httpRequestsTotal counter
+
 	_, err, authStatusCode := lib_auth.AuthenticateUser(r)
 
 	// check if there was an error during the authentication or if the user wasn't authenticated
@@ -407,6 +436,8 @@ func status(w http.ResponseWriter, r *http.Request) {
 }
 
 func deleteAll(w http.ResponseWriter, r *http.Request) {
+	httpRequestsTotal.Inc() // incrementing the httpRequestsTotal counter
+
 	user, err, authStatusCode := lib_auth.AuthenticateUser(r)
 
 	// check if there was an error during the authentication or if the user wasn't authenticated
@@ -439,6 +470,10 @@ func main() {
 
 	// Define the routing
 	router := mux.NewRouter().StrictSlash(true)
+
+	// metrics route for monitoring
+	router.Path("/metrics").Handler(promhttp.Handler())
+
 	router.HandleFunc("/db/", homeLink).Methods("GET")
 
 	router.HandleFunc("/db/select/{id}", selectById).Methods("GET")
