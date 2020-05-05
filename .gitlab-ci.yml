@@ -4,6 +4,7 @@ services:
   - docker:dind
 
 stages:
+  - test
   - build
   - dev
   - production
@@ -34,6 +35,15 @@ dev:
     - kubectl apply -f deployment.yml
     - kubectl apply -f service.yml
     - kubectl set image deployment/database-dev database-dev=${CONTAINER_IMAGE_SHA} --record -n gitlab-managed-apps
+
+test:
+  stage: test
+  image: golang:alpine
+  script:
+    - cd src/${CI_PROJECT_NAME}
+    - apk add --no-cache curl git
+    - go get -d ./...
+    - go test --cover -v
 
 production:
   stage: production
