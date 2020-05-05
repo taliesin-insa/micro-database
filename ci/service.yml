@@ -3,6 +3,8 @@ kind: Service
 metadata:
   name: database-api
   namespace: gitlab-managed-apps
+  labels:
+    app: database
 spec:
   selector:
     app: database
@@ -17,6 +19,8 @@ kind: Service
 metadata:
   name: database-api-dev
   namespace: gitlab-managed-apps
+  labels:
+    app: database-dev
 spec:
   selector:
     app: database-dev
