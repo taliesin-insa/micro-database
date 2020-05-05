@@ -40,7 +40,7 @@ spec:
                   key: password
           resources:
             requests:
-              cpu: "250m"
+              cpu: "100m"
       volumes:
         - name: file-server
           persistentVolumeClaim:
@@ -89,7 +89,7 @@ spec:
                   key: password
           resources:
             requests:
-              cpu: "250m"
+              cpu: "100m"
       volumes:
         - name: file-server-dev
           persistentVolumeClaim:
