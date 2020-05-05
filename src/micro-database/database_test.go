@@ -111,7 +111,6 @@ func setupDB() error {
 	if err != nil {
 		return err
 	}
-	os.Setenv("MICRO_ENVIRONMENT", "test")
 	log.Println("Started Tests")
 	return nil
 }
